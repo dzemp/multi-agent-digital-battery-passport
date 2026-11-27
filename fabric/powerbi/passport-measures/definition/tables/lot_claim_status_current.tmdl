@@ -1,0 +1,72 @@
+/// Claim status and compliance case state of each supplier lot, from the newest app export. Synthetic.
+table lot_claim_status_current
+
+	measure 'Open cases display' = IF(ISBLANK([Lots with open case]), "Not measured", FORMAT([Lots with open case], "#,0"))
+
+	measure 'Accepted cases display' = IF(ISBLANK([Lots with accepted case]), "Not measured", FORMAT([Lots with accepted case], "#,0"))
+
+	measure 'Unverified display' = IF(ISBLANK([Lots without verified claim]), "Not measured", FORMAT([Lots without verified claim], "#,0"))
+
+	measure 'Lots in export' = COUNTROWS(lot_claim_status_current)
+		formatString: 0
+
+	measure 'Lots with open case' = IF(COUNTROWS(ALL(lot_claim_status_current)) = 0, BLANK(), COUNTROWS(FILTER(lot_claim_status_current, lot_claim_status_current[case_state] = "open")) + 0)
+		formatString: 0
+
+	measure 'Lots with accepted case' = IF(COUNTROWS(ALL(lot_claim_status_current)) = 0, BLANK(), COUNTROWS(FILTER(lot_claim_status_current, lot_claim_status_current[case_state] = "accepted")) + 0)
+		formatString: 0
+
+	measure 'Lots without verified claim' = IF(COUNTROWS(ALL(lot_claim_status_current)) = 0, BLANK(), COUNTROWS(FILTER(lot_claim_status_current, lot_claim_status_current[claim_status] <> "verified")) + 0)
+		formatString: 0
+
+	column export_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: export_id
+
+	column generated_utc
+		dataType: string
+		summarizeBy: none
+		sourceColumn: generated_utc
+
+	column lot_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: lot_id
+
+	column supplier_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: supplier_id
+
+	column material
+		dataType: string
+		summarizeBy: none
+		sourceColumn: material
+
+	column claim_status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: claim_status
+
+	column case_state
+		dataType: string
+		summarizeBy: none
+		sourceColumn: case_state
+
+	column fields_complete
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: fields_complete
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	partition lot_claim_status_current = entity
+		mode: directLake
+		source
+			entityName: lot_claim_status_current
+			schemaName: dbo
+			expressionSource: DatabaseQuery

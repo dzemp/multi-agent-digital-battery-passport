@@ -1,0 +1,186 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "economics",
+  "displayName": "Unit economics",
+  "displayOption": "FitToPage",
+  "height": 900,
+  "width": 1600,
+  "visualInteractions": [
+    {
+      "source": "kpi_0",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "component_cost",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "build_budget",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "component_cost",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "build_budget",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "component_cost",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "build_budget",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "component_cost",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "build_budget",
+      "type": "NoFilter"
+    },
+    {
+      "source": "component_cost",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "component_cost",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "component_cost",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "component_cost",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "component_cost",
+      "target": "build_budget",
+      "type": "NoFilter"
+    },
+    {
+      "source": "build_budget",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "build_budget",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "build_budget",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "build_budget",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "build_budget",
+      "target": "component_cost",
+      "type": "NoFilter"
+    }
+  ],
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#FAF9F8'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

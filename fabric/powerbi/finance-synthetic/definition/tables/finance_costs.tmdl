@@ -1,0 +1,72 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_costs
+
+	measure 'Base operating cost' = CALCULATE(SUM(finance_costs[operating_eur]), REMOVEFILTERS(finance_scenarios), finance_costs[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	column scenario
+		dataType: string
+		summarizeBy: none
+		sourceColumn: scenario
+
+	column component
+		dataType: string
+		summarizeBy: none
+		sourceColumn: component
+
+	column fixed_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: fixed_eur
+
+	column variable_per_passport_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: variable_per_passport_eur
+
+	column operating_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: operating_eur
+
+	column investment_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: investment_eur
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_costs = m
+		mode: import
+		source =
+			#table(
+				type table [scenario = text, component = text, fixed_eur = nullable number, variable_per_passport_eur = nullable number, operating_eur = nullable number, investment_eur = nullable number, data_label = text, model_version = text],
+				{
+					{"Cautious", "App, storage and monitoring", 150000.00, 0.35, 187800.00, 378000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", "Fabric reporting", 45000.00, 0, 45000.00, 108000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", "Model inference", 0.00, 0.08, 8640.00, 54000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", "Human review and assurance", 100000.00, 2.40, 359200.00, 324000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", "Connector and partner support", 120000.00, 0.50, 174000.00, 540000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", "Security and operations", 95000.00, 0.15, 111200.00, 216000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", "App, storage and monitoring", 150000.00, 0.35, 201975.00, 420000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", "Fabric reporting", 45000.00, 0, 45000.00, 120000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", "Model inference", 0.00, 0.08, 11880.00, 60000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", "Human review and assurance", 100000.00, 2.40, 456400.00, 360000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", "Connector and partner support", 120000.00, 0.50, 194250.00, 600000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", "Security and operations", 95000.00, 0.15, 117275.00, 240000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", "App, storage and monitoring", 150000.00, 0.35, 223500.00, 483000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", "Fabric reporting", 45000.00, 0, 45000.00, 138000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", "Model inference", 0.00, 0.08, 16800.00, 69000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", "Human review and assurance", 100000.00, 2.40, 604000.00, 414000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", "Connector and partner support", 120000.00, 0.50, 225000.00, 690000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", "Security and operations", 95000.00, 0.15, 126500.00, 276000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

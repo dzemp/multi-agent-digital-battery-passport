@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% macro integrity_status(state) -%}
+  {% set tone, text = {"match": ("good", "SHA-256 matches"), "mismatch": ("bad", "SHA-256 mismatch"),
+                       "missing": ("warn", "File missing"), "unavailable": ("warn", "Version unavailable")}[state] %}
+  <span class="status tone-{{ tone }}">{{ text }}</span>
+{%- endmacro %}
+{% block style %}
+  .docs { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:12px; }
+  .docs li { display:flex; flex:1 1 100%; flex-wrap:wrap; min-width:0; align-items:center; gap:10px; background:var(--white); border:1px solid var(--line); border-radius:8px;
+             padding:10px 14px; font-size:14px; box-shadow:var(--shadow); }
+  .docs .icon { color:var(--blue-ink); }
+  .docs a { margin-left:8px; white-space:nowrap; }
+  .doc-name { min-width:0; overflow-wrap:anywhere; }
+  .doc-integrity { width:100%; display:flex; flex-wrap:wrap; gap:8px 24px; }
+  .doc-integrity p { margin:0; }
+  .doc-integrity details { width:100%; }
+  .doc-integrity code { overflow-wrap:anywhere; }
+  .links { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+  .links li { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  .back { margin-top:28px; }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Supplier lot · {{ view.labels|join(" · ") }}</p>
+    <h1>Supplier lot {{ view.lot_id }}</h1>
+    <p class="subtitle">Supplier check: {{ view.supplier.text }}.{% if view.evidence.missing %} {{ view.evidence.missing }}.{% endif %}</p>
+  </div>
+  <span class="status big tone-{{ view.evidence.tone }}">{{ view.evidence.text }}</span>
+</div>
+
+<section class="section" aria-labelledby="docs">
+  <div class="section-head"><h2 id="docs">Documents on file</h2>
+    <p>A complete pair is a supplier claim plus a transport record.{% if not view.can_read %} Only a Passport.Reviewer or Passport.Compliance can read document content.{% endif %}</p>
+    <p>Integrity is checked when this page loads: the current file and recorded version are compared with the SHA-256 stored in SQL. A match does not prove the claim is true or verify the SQL ledger itself. Read document uses the version recorded on upload.</p></div>
+{% if view.documents %}
+  <ul class="docs">
+  {% for doc in view.documents %}
+    <li id="evidence-{{ doc.evidence_id }}">{{ brand.icon("evidence", 20) }}<span class="doc-name"><strong>{{ doc.file_name }}</strong><br><span class="muted">{{ doc.kind }} · {{ doc.uploaded }}</span></span>
+      {% if doc.read_url %}<a href="{{ doc.read_url }}" target="_blank" rel="noopener noreferrer">Read document<span class="visually-hidden"> {{ doc.file_name }} (opens in a new tab)</span></a>{% endif %}
+      <div class="doc-integrity">
+        {% if doc.integrity %}
+        <p><strong>Current file:</strong> {{ integrity_status(doc.integrity.current_blob) }}</p>
+        <p><strong>Recorded version:</strong> {{ integrity_status(doc.integrity.recorded_version) }}</p>
+        {% else %}
+        <p class="status tone-warn">Integrity unavailable: the evidence reference is no longer available.</p>
+        {% endif %}
+        <details><summary>SHA-256 recorded in SQL</summary><code>{{ doc.sha256 }}</code></details>
+      </div>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No document has been uploaded for this lot.</p></div>
+{% endif %}
+</section>
+
+<section class="section" aria-labelledby="batteries">
+  <div class="section-head"><h2 id="batteries">Batteries using this lot</h2></div>
+{% if view.batteries %}
+  <div class="card table-card">
+  <table>
+    <thead><tr><th scope="col">Battery</th><th scope="col">Status</th><th scope="col">Decision trail</th><th scope="col">Passport</th></tr></thead>
+    <tbody>
+    {% for battery in view.batteries %}
+      <tr><th scope="row">{{ battery.battery_id }}</th>
+        <td><span class="status tone-{{ battery.status.tone }}">{{ battery.status.text }}</span></td>
+        <td><a href="{{ battery.trail_url }}">Decision trail<span class="visually-hidden"> for {{ battery.battery_id }}</span></a></td>
+        <td><a href="{{ battery.public_url }}">Public view<span class="visually-hidden"> of {{ battery.battery_id }}</span></a></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No battery uses this lot yet.</p></div>
+{% endif %}
+</section>
+
+<section class="section" aria-labelledby="holds">
+  <div class="section-head"><h2 id="holds">Holds</h2></div>
+{% if view.holds %}
+  <ul class="links">
+  {% for hold in view.holds %}
+    <li><a href="{{ hold.url }}">Hold {{ hold.review_id }}</a>
+      {% if hold.open %}<span class="status tone-warn">Open</span>{% else %}<span class="status tone-good">Resolved</span>{% endif %}
+      <span class="muted small">Raised by the {{ hold.opened_by }} on {{ hold.opened_when }}</span></li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No hold has been raised for this lot.</p></div>
+{% endif %}
+</section>
+
+<section class="section" aria-labelledby="cases">
+  <div class="section-head"><h2 id="cases">Compliance cases</h2></div>
+{% if view.cases %}
+  <ul class="links">
+  {% for case in view.cases %}
+    <li>{% if can_open_cases %}<a href="{{ case.url }}">Case {{ case.case_id }}</a>{% else %}<span>Case {{ case.case_id }}</span>{% endif %}
+      <span class="status tone-{{ case.tone }}">{{ case.state }}</span></li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No compliance case has been opened for this lot.</p></div>
+{% endif %}
+</section>
+
+<p class="back"><a href="{{ back[0] }}">Back to {{ back[1] }}</a></p>
+{% endblock %}

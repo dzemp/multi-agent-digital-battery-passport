@@ -1,0 +1,85 @@
+# Illustrative, not official. Synthetic emission factors, risk ratings and second-life values for the fictional
+# supply chain of this MVP. They are plausible orders of magnitude chosen for the scenario, not sourced figures, not
+# an EU calculation method and not advice. Change factor_set_version whenever a value changes.
+
+[factor_set]
+factor_set_version = "illustrative-factors-2026-1"
+method_version = "illustrative-pcf-2"
+label = "Illustrative, not official"
+data_label = "synthetic"
+
+# Product carbon footprint per kg of material in a lot (kg CO2e per kg): primary and recycled feedstock.
+# risk_rating is a synthetic due-diligence rating for the material's mined supply; critical marks Co, Li, Ni and
+# graphite, whose lots need a signed supplier claim.
+[materials.lithium]
+primary_kgco2e_per_kg = 9.0
+recycled_kgco2e_per_kg = 3.0
+risk_rating = "medium"
+critical = true
+
+[materials.nickel]
+primary_kgco2e_per_kg = 12.0
+recycled_kgco2e_per_kg = 4.0
+risk_rating = "medium"
+critical = true
+
+[materials.cobalt]
+primary_kgco2e_per_kg = 15.0
+recycled_kgco2e_per_kg = 5.0
+risk_rating = "high"
+critical = true
+
+[materials.graphite]
+primary_kgco2e_per_kg = 4.5
+recycled_kgco2e_per_kg = 2.0
+risk_rating = "medium"
+critical = true
+
+[materials.manganese]
+primary_kgco2e_per_kg = 2.5
+recycled_kgco2e_per_kg = 1.0
+risk_rating = "low"
+critical = false
+
+[materials.electrolyte]
+primary_kgco2e_per_kg = 6.0
+recycled_kgco2e_per_kg = 6.0
+risk_rating = "low"
+critical = false
+
+[materials.copper_foil]
+primary_kgco2e_per_kg = 5.0
+recycled_kgco2e_per_kg = 1.5
+risk_rating = "low"
+critical = false
+
+[materials.aluminium_foil]
+primary_kgco2e_per_kg = 9.0
+recycled_kgco2e_per_kg = 1.0
+risk_rating = "low"
+critical = false
+
+[materials.separator]
+primary_kgco2e_per_kg = 3.0
+recycled_kgco2e_per_kg = 3.0
+risk_rating = "low"
+critical = false
+
+# Electricity grid factor per plant (kg CO2e per kWh), referenced by its ID in the package.
+[grid.PLANT-SE]
+grid_factor_id = "GF-PLANT-SE-2026"
+kgco2e_per_kwh = 0.04
+
+[grid.PLANT-DE]
+grid_factor_id = "GF-PLANT-DE-2026"
+kgco2e_per_kwh = 0.38
+
+[grid.PLANT-PL]
+grid_factor_id = "GF-PLANT-PL-2026"
+kgco2e_per_kwh = 0.70
+
+# Second-life valuation scenario for a repurposed battery: a value, not a sale.
+[second_life]
+currency = "EUR"
+value_eur_per_rated_kwh = 45.0
+minimum_soh_pct = 70

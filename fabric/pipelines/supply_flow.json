@@ -1,0 +1,56 @@
+{
+  "properties": {
+    "description": "Synthetic battery passport MVP: supplier deliveries in ingest -> bronze -> silver -> gold package.",
+    "parameters": {
+      "delivery_set": {"type": "string", "defaultValue": ""},
+      "build_id": {"type": "string", "defaultValue": ""},
+      "build_sequence": {"type": "string", "defaultValue": ""},
+      "completed_utc": {"type": "string", "defaultValue": ""}
+    },
+    "activities": [
+      {
+        "name": "bronze_load",
+        "type": "TridentNotebook",
+        "dependsOn": [],
+        "policy": {"timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30},
+        "typeProperties": {
+          "workspaceId": "{{workspace_id}}",
+          "notebookId": "{{notebook:bronze_load}}",
+          "parameters": {
+            "delivery_set": {"value": {"value": "@pipeline().parameters.delivery_set", "type": "Expression"}, "type": "string"}
+          }
+        }
+      },
+      {
+        "name": "silver_normalise",
+        "type": "TridentNotebook",
+        "dependsOn": [{"activity": "bronze_load", "dependencyConditions": ["Succeeded"]}],
+        "policy": {"timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30},
+        "typeProperties": {
+          "workspaceId": "{{workspace_id}}",
+          "notebookId": "{{notebook:silver_normalise}}",
+          "parameters": {
+            "delivery_set": {"value": {"value": "@pipeline().parameters.delivery_set", "type": "Expression"}, "type": "string"},
+            "build_id": {"value": {"value": "@pipeline().parameters.build_id", "type": "Expression"}, "type": "string"}
+          }
+        }
+      },
+      {
+        "name": "gold_package",
+        "type": "TridentNotebook",
+        "dependsOn": [{"activity": "silver_normalise", "dependencyConditions": ["Succeeded"]}],
+        "policy": {"timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30},
+        "typeProperties": {
+          "workspaceId": "{{workspace_id}}",
+          "notebookId": "{{notebook:gold_package}}",
+          "parameters": {
+            "delivery_set": {"value": {"value": "@pipeline().parameters.delivery_set", "type": "Expression"}, "type": "string"},
+            "build_id": {"value": {"value": "@pipeline().parameters.build_id", "type": "Expression"}, "type": "string"},
+            "build_sequence": {"value": {"value": "@pipeline().parameters.build_sequence", "type": "Expression"}, "type": "string"},
+            "completed_utc": {"value": {"value": "@pipeline().parameters.completed_utc", "type": "Expression"}, "type": "string"}
+          }
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,241 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_scenarios
+
+	measure 'Scenario NPV' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[npv_eur]))
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Efficiency-only NPV' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[efficiency_npv_eur]))
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Scenario volume' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[published_passports]))
+		formatString: #,0
+
+	measure 'Premium basis points' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[premium_bps]))
+		formatString: 0
+
+	measure 'Scenario payback' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[payback_months]))
+		formatString: 0.0" months"
+
+	measure 'Second-life resale' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[resale_eur]))
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Recovery expense' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[recovery_total_eur]))
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Circular contribution' = IF(HASONEVALUE(finance_scenarios[scenario]), MAX(finance_scenarios[circular_eur]))
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Unit cost' = CALCULATE(MAX(finance_scenarios[cost_per_passport_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Unit cost display' = IF(ISBLANK([Unit cost]), "Not measured", "EUR " & FORMAT(DIVIDE([Unit cost], 1), "0.00") & "")
+
+	measure 'Run cost' = CALCULATE(MAX(finance_scenarios[operating_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Run cost display' = IF(ISBLANK([Run cost]), "Not measured", "EUR " & FORMAT(DIVIDE([Run cost], 1000000), "0.00") & "m")
+
+	measure 'Investment' = CALCULATE(MAX(finance_scenarios[investment_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Investment display' = IF(ISBLANK([Investment]), "Not measured", "EUR " & FORMAT(DIVIDE([Investment], 1000000), "0.00") & "m")
+
+	measure 'Base NPV' = CALCULATE(MAX(finance_scenarios[npv_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Base NPV display' = IF(ISBLANK([Base NPV]), "Not measured", "EUR " & FORMAT(DIVIDE([Base NPV], 1000000), "0.00") & "m")
+
+	measure 'Efficiency NPV' = CALCULATE(MAX(finance_scenarios[efficiency_npv_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Efficiency NPV display' = IF(ISBLANK([Efficiency NPV]), "Not measured", "EUR " & FORMAT(DIVIDE([Efficiency NPV], 1000000), "0.00") & "m")
+
+	measure 'Payback' = CALCULATE(MAX(finance_scenarios[payback_months]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Payback display' = IF(ISBLANK([Payback]), "Not reached", FORMAT([Payback], "0.0") & " mo")
+
+	measure 'ROI' = CALCULATE(MAX(finance_scenarios[roi]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'ROI display' = FORMAT([ROI], "0.0%")
+
+	measure 'Funding' = CALCULATE(MAX(finance_scenarios[peak_funding_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Funding display' = IF(ISBLANK([Funding]), "Not measured", "EUR " & FORMAT(DIVIDE([Funding], 1000000), "0.00") & "m")
+
+	measure 'Year three cash' = CALCULATE(MAX(finance_scenarios[year3_cash_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Year three cash display' = IF(ISBLANK([Year three cash]), "Not measured", "EUR " & FORMAT(DIVIDE([Year three cash], 1000000), "0.00") & "m")
+
+	measure 'Returns' = CALCULATE(MAX(finance_scenarios[returned_units]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Returns display' = FORMAT([Returns], "#,0")
+
+	measure 'Recovered' = CALCULATE(MAX(finance_scenarios[recovered_units]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Recovered display' = FORMAT([Recovered], "#,0")
+
+	measure 'Circular' = CALCULATE(MAX(finance_scenarios[circular_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Circular display' = IF(ISBLANK([Circular]), "Not measured", "EUR " & FORMAT(DIVIDE([Circular], 1000000), "0.00") & "m")
+
+	measure 'Premium' = CALCULATE(MAX(finance_scenarios[premium_eur]), REMOVEFILTERS(finance_scenarios), finance_scenarios[scenario] = "Base")
+
+	measure 'Premium display' = IF(ISBLANK([Premium]), "Not measured", "EUR " & FORMAT(DIVIDE([Premium], 1000000), "0.00") & "m")
+
+	column scenario
+		dataType: string
+		summarizeBy: none
+		sourceColumn: scenario
+		sortByColumn: order
+
+	column order
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: order
+
+	column volume_factor
+		dataType: double
+		summarizeBy: none
+		sourceColumn: volume_factor
+
+	column coverage
+		dataType: double
+		summarizeBy: none
+		sourceColumn: coverage
+
+	column verified_share
+		dataType: double
+		summarizeBy: none
+		sourceColumn: verified_share
+
+	column premium_bps
+		dataType: double
+		summarizeBy: none
+		sourceColumn: premium_bps
+
+	column returned_units
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: returned_units
+
+	column recovery_yield
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recovery_yield
+
+	column resale_unit_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: resale_unit_eur
+
+	column recovery_cost_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recovery_cost_eur
+
+	column investment_factor
+		dataType: double
+		summarizeBy: none
+		sourceColumn: investment_factor
+
+	column published_passports
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: published_passports
+
+	column investment_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: investment_eur
+
+	column operating_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: operating_eur
+
+	column cost_per_passport_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: cost_per_passport_eur
+
+	column premium_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: premium_eur
+
+	column recovered_units
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: recovered_units
+
+	column resale_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: resale_eur
+
+	column recovery_total_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recovery_total_eur
+
+	column circular_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: circular_eur
+
+	column npv_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: npv_eur
+
+	column efficiency_npv_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: efficiency_npv_eur
+
+	column roi
+		dataType: double
+		summarizeBy: none
+		sourceColumn: roi
+
+	column payback_months
+		dataType: double
+		summarizeBy: none
+		sourceColumn: payback_months
+
+	column peak_funding_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: peak_funding_eur
+
+	column year3_cash_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: year3_cash_eur
+
+	column discount_rate
+		dataType: double
+		summarizeBy: none
+		sourceColumn: discount_rate
+
+	column horizon_years
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: horizon_years
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_scenarios = m
+		mode: import
+		source =
+			#table(
+				type table [scenario = text, order = Int64.Type, volume_factor = nullable number, coverage = nullable number, verified_share = nullable number, premium_bps = nullable number, returned_units = Int64.Type, recovery_yield = nullable number, resale_unit_eur = nullable number, recovery_cost_eur = nullable number, investment_factor = nullable number, published_passports = Int64.Type, investment_eur = nullable number, operating_eur = nullable number, cost_per_passport_eur = nullable number, premium_eur = nullable number, recovered_units = Int64.Type, resale_eur = nullable number, recovery_total_eur = nullable number, circular_eur = nullable number, npv_eur = nullable number, efficiency_npv_eur = nullable number, roi = nullable number, payback_months = nullable number, peak_funding_eur = nullable number, year3_cash_eur = nullable number, discount_rate = nullable number, horizon_years = Int64.Type, data_label = text, model_version = text],
+				{
+					{"Cautious", 1, 0.75, 0.96, 0.60, 0, 1200, 0.55, 600, 420, 0.90, 108000, 1620000.00, 885840.00, 8.20, 0.00, 660, 396000.00, 504000.00, -108000.00, -35442.46, 175567.31, -0.007692640039642649233055131300, 31.52, 1620000.00, 950160.00, 0.10, 3, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 2, 1, 0.99, 0.80, 5, 2400, 0.65, 700, 430, 1, 148500, 1800000.00, 1026780.00, 6.91, 1188000.00, 1560, 1092000.00, 1032000.00, 60000.00, 3582850.58, 1144515.49, 0.5879026960934164655522402127, 14.20, 1800000.00, 2894220.00, 0.10, 3, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 3, 1.40, 1, 0.90, 10, 4200, 0.75, 800, 450, 1.15, 210000, 2070000.00, 1240800.00, 5.91, 3780000.00, 3150, 2520000.00, 1890000.00, 630000.00, 11235446.74, 2619214.58, 1.328255679782330875067253496, 6.91, 2070000.00, 6949200.00, 0.10, 3, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

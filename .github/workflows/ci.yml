@@ -1,0 +1,85 @@
+# Checks for the battery passport MVP: ruff, the Bicep templates and the four unit test suites.
+# No secrets, no Azure sign-in and no deployment.
+#
+# To use it, move this file to .github/workflows/ci.yml in a repository whose root is this folder.
+# If this folder stays a subfolder, set defaults.run.working-directory to it and prefix the cache paths with it.
+# The hosted agent packages conflict with the app's, so they are tested in a separate job and environment.
+# Bicep is pinned because the template tests fail on any compiler warning; raise the version deliberately.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Tool, app, templates and lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            app/requirements*.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt -r app/requirements-dev.txt ruff==0.17.6
+
+      - name: Install Bicep
+        run: az bicep install --version v0.49.2
+
+      - name: Lint
+        run: python -m ruff check .
+
+      - name: Build the Bicep entry points
+        run: |
+          az bicep build --file infra/main.bicep --stdout > /dev/null
+          az bicep build --file infra/modules/app.bicep --stdout > /dev/null
+
+      - name: Tool, infrastructure, data, Fabric and scenario tests
+        run: python -m unittest discover -s tests
+
+      - name: Evaluation tests
+        run: python -m unittest discover -s agents/evaluation
+
+      - name: App tests
+        run: cd app && python -m unittest discover -s tests
+
+  hosted-agent:
+    name: Hosted agent
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DBP_REQUIRE_HOSTED: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: agents/hosted/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r agents/hosted/requirements.txt
+
+      - name: Hosted agent tests
+        run: python -m unittest discover -s agents/hosted

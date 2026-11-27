@@ -1,0 +1,133 @@
+{# Sidebar: links only, no JavaScript. The current page carries aria-current="page".
+   Staff see the production series; passport viewers (OEM, Recycler, Authority, Compliance) see the passports;
+   an administrator without a staff role sees only Monitoring and Tools. #}
+{% import "_brand.html" as brand %}
+<nav class="side" aria-label="Main">
+  <details class="workspace-menu" open>
+  <summary class="navigation-toggle">Workspace navigation</summary>
+  <div class="side-inner">
+    {% if persona.tour_available %}<ul class="side-list">
+      <li><a class="side-link" href="/journey"{% if place.page == "journey" %} aria-current="page"{% endif %}>{{ brand.icon("arrow", 20) }}<span class="side-text">Guided journey</span></a></li>
+    </ul>{% endif %}
+  {% if nav.oem_fleet %}
+    <ul class="side-list"><li><a class="side-link" href="/oem/fleet{% if scope.series_id and not scope.all %}?series_id={{ scope.series_id|urlencode }}{% endif %}">OEM campaign exposure</a></li></ul>
+  {% endif %}
+  {% if nav.staff %}
+    <ul class="side-list">
+      <li><a class="side-link" href="{{ nav.readiness_url }}"{% if place.page == "readiness" %} aria-current="page"{% endif %}>
+        {{ brand.icon("readiness", 20) }}<span class="side-text">Passport readiness</span>
+        {% if nav.progress %}<span class="count" title="{{ nav.progress.label }}">{{ nav.progress.text }}</span>{% endif %}</a></li>
+    </ul>
+
+  {% if nav.series %}
+    <details class="nav-fold"{% if place.page in ("passport", "trail") %} open{% endif %}>
+    <summary class="side-label">Browse batteries</summary>
+    <p class="side-label" id="side-batch">{{ nav.series }}</p>
+    <ul class="side-list" aria-labelledby="side-batch">
+    {% for b in nav.batteries %}
+      {% set here = place.battery == b.battery_id %}
+      <li class="side-battery{% if here %} is-here{% endif %}">
+        <div class="battery-line">
+          {{ brand.icon("battery", 18) }}<span class="battery-id">{{ b.battery_id }}</span>
+          <span class="side-state s-{{ b.tone }}">{{ b.status }}</span>
+        </div>
+        <ul class="side-sub">
+          <li><a href="{{ b.public_url }}"{% if here and place.page == "passport" %} aria-current="page"{% endif %}>Passport</a></li>
+          <li><a href="{{ b.trail_url }}"{% if here and place.page == "trail" %} aria-current="page"{% endif %}>Decision trail</a></li>
+        </ul>
+      </li>
+    {% endfor %}
+    </ul>
+    </details>
+
+    <p class="side-label" id="side-holds">Human reviews{% if nav.open_holds %} <span class="count warn">{{ nav.open_holds }} open</span>{% endif %}</p>
+    {% if nav.holds %}
+    <ul class="side-list" aria-labelledby="side-holds">
+    {% for h in nav.holds %}
+      <li><a class="side-link two-line" href="{{ h.url }}"{% if place.review == h.review_id %} aria-current="page"{% endif %}>
+        {{ brand.icon("hold", 20) }}<span class="side-text">{{ h.lot_id }}
+        <span class="side-state s-{{ h.tone }}">{{ h.text }}</span></span></a></li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p class="side-empty">No holds in this selection.</p>
+    {% endif %}
+  {% endif %}
+  {% endif %}
+
+  {% if nav.viewer %}
+    <p class="side-label" id="side-passports">Passports</p>
+    <ul class="side-list" aria-labelledby="side-passports">
+    {% for b in nav.passports %}
+      <li><a class="side-link two-line" href="{{ b.url }}"{% if place.battery == b.battery_id %} aria-current="page"{% endif %}>
+        {{ brand.icon("battery", 20) }}<span class="side-text">{{ b.battery_id }}
+        <span class="side-state s-{{ b.tone }}">{{ b.status }}</span></span></a></li>
+    {% endfor %}
+    </ul>
+    {% if nav.authority %}
+    <p class="side-label" id="side-authority">Market surveillance (read only)</p>
+    <ul class="side-list" aria-labelledby="side-authority">
+      <li><a class="side-link" href="/"{% if place.page == "console" %} aria-current="page"{% endif %}>{{ brand.icon("console", 20) }}<span class="side-text">Parties and connector log</span></a></li>
+      <li><a class="side-link" href="/lifecycle/quarantine">{{ brand.icon("hold", 20) }}<span class="side-text">Quarantined events (JSON)</span></a></li>
+    </ul>
+    {% endif %}
+  {% endif %}
+
+  {% if nav.case_reader %}
+    <p class="side-label" id="side-cases">Compliance cases{% if nav.open_cases %} <span class="count warn">{{ nav.open_cases }} open</span>{% endif %}</p>
+    <ul class="side-list" aria-labelledby="side-cases">
+      <li><a class="side-link" href="/cases"{% if place.page == "cases" %} aria-current="page"{% endif %}>{{ brand.icon("shield", 20) }}<span class="side-text">All cases</span></a></li>
+    {% for c in nav.cases %}
+      <li><a class="side-link two-line" href="{{ c.url }}"{% if place.case == c.case_id %} aria-current="page"{% endif %}>
+        {{ brand.icon("hold", 20) }}<span class="side-text">{{ c.lot_id }}
+        <span class="side-state s-{{ c.tone }}">{{ "Open" if c.open else "Accepted" }}</span></span></a></li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if nav.second_life_reader %}
+    <p class="side-label" id="side-second-life">Second-life approvals{% if nav.open_second_life %} <span class="count warn">{{ nav.open_second_life }} open</span>{% endif %}</p>
+    <ul class="side-list" aria-labelledby="side-second-life">
+      <li><a class="side-link" href="/second-life"{% if place.page == "second_life" %} aria-current="page"{% endif %}>{{ brand.icon("battery", 20) }}<span class="side-text">All requests</span></a></li>
+    {% for r in nav.second_life %}
+      <li><a class="side-link two-line" href="{{ r.url }}"{% if place.request == r.request_id %} aria-current="page"{% endif %}>
+        {{ brand.icon("hold", 20) }}<span class="side-text">{{ r.battery_id }}
+        <span class="side-state s-{{ r.tone }}">{{ r.state }}</span></span></a></li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if nav.policy %}
+    <p class="side-label">Policy governance</p>
+    <ul class="side-list">
+      <li><a class="side-link" href="/policy"{% if place.page == "policy" %} aria-current="page"{% endif %}>{{ brand.icon("shield", 20) }}<span class="side-text">Regulatory Watch</span></a></li>
+    </ul>
+  {% endif %}
+
+  {% if (nav.workbooks and nav.staff) or nav.admin %}
+    <p class="side-label" id="side-monitoring">Monitoring</p>
+    {% if nav.workbooks %}
+    <ul class="side-list" aria-labelledby="side-monitoring">
+    {% for w in nav.workbooks %}
+      <li><a class="side-link" href="{{ w.url }}" target="_blank" rel="noopener noreferrer" title="{{ w.title }} workbook (opens in a new window)">
+        {{ brand.icon("monitor", 20) }}<span class="side-text">{{ w.label }}<span class="visually-hidden"> workbook (opens in a new window)</span></span>
+        <span class="ext">{{ brand.icon("external", 16) }}</span></a></li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p class="side-hint">No workbook links yet. <a href="/settings">Add them in Settings</a>.</p>
+    {% endif %}
+  {% endif %}
+
+    <p class="side-label">Tools</p>
+    <ul class="side-list">
+    {% if nav.staff %}
+      <li><a class="side-link" href="/"{% if place.page == "console" %} aria-current="page"{% endif %}>{{ brand.icon("console", 20) }}<span class="side-text">Operations console</span></a></li>
+    {% endif %}
+    {% if nav.show_settings %}
+      <li><a class="side-link" href="/settings"{% if place.page == "settings" %} aria-current="page"{% endif %}>{{ brand.icon("settings", 20) }}<span class="side-text">Settings</span></a></li>
+    {% endif %}
+    </ul>
+  </div>
+  </details>
+</nav>

@@ -1,0 +1,13 @@
+{
+  "document_type": "transport_record",
+  "data_label": "synthetic - fictional companies and places",
+  "record_id": "TR-LOT-LI-A-0417",
+  "lot_id": "LOT-LI-A",
+  "material": "lithium",
+  "quantity_kg": 100,
+  "carrier": "Fabrikam Freight (fictional)",
+  "loaded_at_site": "Mine South",
+  "loaded_utc": "2026-10-03T06:30:00Z",
+  "delivered_to": "PLANT-SE",
+  "delivered_utc": "2026-10-09T14:10:00Z"
+}

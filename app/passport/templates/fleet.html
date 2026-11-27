@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">{{ view.oem_id }} · Read only</p><h1>OEM campaign exposure</h1>
+<p>Distinct issued physical packs with an effective open recall or service campaign. Recycled packs are excluded.
+A repurposed pack counts once, with its successor’s current holder.</p></div></div>
+<form method="get" action="/oem/fleet">
+  <label for="fleet-series">Series ID (optional)</label>
+  <input id="fleet-series" name="series_id" value="{{ view.series_id or '' }}" maxlength="64">
+  <label for="fleet-campaign">Campaign ID (optional)</label>
+  <input id="fleet-campaign" name="campaign_id" value="{{ view.campaign_id or '' }}" maxlength="64">
+  <button type="submit" class="btn">Filter fleet</button>
+</form>
+<section class="panel" aria-labelledby="exposure">
+<h2 id="exposure">Affected physical packs</h2>
+{% if view.feed_status == 'unavailable' %}<p>Feed unavailable for this selection. Exposure is unknown.</p>
+{% else %}
+<p>{% if view.feed_status == 'stale' %}Stale feed. Last known exposure (not a current clearance):{% else %}Current feed:{% endif %}
+<strong>{{ view.affected_pack_count }}</strong> affected pack(s){% if view.holder_id %} for {{ view.holder_id }}{% endif %}.</p>
+{% for feed in view.feeds %}<p class="small">{{ feed.series_id }} · {{ feed.feed_status }} as of {{ feed.as_of_utc }}</p>{% endfor %}
+{% if view.holders %}<table><caption>By current holder</caption><thead><tr><th>Holder</th><th>Affected packs</th></tr></thead>
+<tbody>{% for h in view.holders %}<tr><td><a href="/oem/fleet?holder_id={{ h.holder_id|urlencode }}{% if view.series_id %}&amp;series_id={{ view.series_id|urlencode }}{% endif %}{% if view.campaign_id %}&amp;campaign_id={{ view.campaign_id|urlencode }}{% endif %}">{{ h.holder_id }}</a></td><td>{{ h.affected_pack_count }}</td></tr>{% endfor %}</tbody></table>
+<table><caption>Authorized pack drilldown</caption><thead><tr><th>Physical pack</th><th>Current passport</th><th>Holder</th><th>Campaigns</th></tr></thead>
+<tbody>{% for p in view.packs %}<tr><td>{{ p.physical_battery_id }}</td><td><a href="/p/{{ p.passport_id|urlencode }}?series={{ p.series_id|urlencode }}">{{ p.passport_id }}</a></td><td>{{ p.holder_id }}</td><td>{{ p.campaign_ids|join(', ') }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+{% endif %}</section>
+{% endblock %}

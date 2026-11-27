@@ -1,0 +1,55 @@
+# Settings for python -m dbp_mvp. Copy this file to config/mvp.toml and fill in the four required values.
+# config/mvp.toml is ignored by Git. It holds no secrets: the VM password is generated and shown once,
+# and the app's sign-in secret is created during deployment and stored only in Azure.
+
+# --- Required ---------------------------------------------------------------------------------------------
+subscription_id = ""        # az account show --query id -o tsv
+operator_upn = ""           # your sign-in name: az ad signed-in-user show --query userPrincipalName -o tsv
+prefix = ""                 # 3-6 lowercase letters/digits, starting with a letter; names every resource (<prefix>-rg)
+client_ip = ""              # your public IPv4 address, allowed to reach the developer VM over RDP
+
+# --- Optional (defaults shown) --------------------------------------------------------------------------
+location = "swedencentral"  # region with Foundry agents, the models below and Fabric
+vm_access = "source-ip"     # "source-ip": RDP open to client_ip only; "jit": Defender for Servers Plan 2 JIT
+vm_auto_shutdown = "19:00"  # daily VM shutdown, 24-hour time
+time_zone = "W. Europe Standard Time"  # Windows time zone ID for the shutdown
+deploy_fabric = true        # Fabric capacity and workspace for production, warranty, recall and reporting
+fabric_sku = "F2"           # F2 is the smallest; billed only while Active, paused when not needed
+enable_nat_gateway = false  # fixed outbound address for the agents subnet (extra charge)
+warm_replica = false        # minimum 1 in agent mode or when true, otherwise 0; maximum 3 app replicas
+enable_alerts = false       # Azure Monitor alerts; enable only with an owner for the e-mails
+alert_email = ""            # required when enable_alerts = true
+powerbi = false             # optional Power BI semantic model on the Fabric reporting copy (viewers need Pro or PPU on F2)
+extra_batteries = 0         # 0-50 additional batteries beyond the five story packs; see docs/scenario-walkthrough.md
+prices_file = ""            # optional model token price list; see "Model prices" in docs/deployment.md
+
+# Developer VM source overrides. Normally bootstrap uses this checkout's origin and upstream branch.
+# repo_url = ""             # HTTPS clone URL, for example when deploying from a fork
+# repo_ref = ""             # branch or tag; without an upstream, Git uses the remote's default branch
+
+[scenarios]
+evaluation = false            # allow 'python -m dbp_mvp scenario evaluation --apply' (billable model calls)
+credential_negatives = false  # allow 'scenario credential_negatives --apply': rejected test messages stay in the
+                              # deployed app's append-only connector log
+
+# Model deployments in the Foundry account. Omit to use the defaults, which match the agents' model roles:
+# Each of these model/SKU pairs maps capacity 200 to 200 RPM and 200,000 TPM in Sweden Central (checked 16 November 2026).
+# Limits are shared by every agent using that deployment; tool turns each consume a model request.
+# An explicit [[models]] list replaces all defaults: include all three, and apply changes through stage A1.
+# [[models]]
+# name = "gpt-6.1-sol"
+# version = "2026-09-29"
+# sku = "DataZoneStandard"   # prompts processed within the location's Microsoft-defined data zone (EU zone for swedencentral)
+# capacity = 200
+#
+# [[models]]
+# name = "gpt-5.6-luna"
+# version = "2026-07-09"
+# sku = "DataZoneStandard"
+# capacity = 200
+#
+# [[models]]
+# name = "gpt-5.6-terra"
+# version = "2026-07-09"
+# sku = "DataZoneStandard"
+# capacity = 200

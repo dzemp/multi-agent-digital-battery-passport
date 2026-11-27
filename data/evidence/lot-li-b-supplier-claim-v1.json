@@ -1,0 +1,14 @@
+{
+  "document_type": "supplier_sourcing_claim",
+  "data_label": "synthetic - fictional companies and places",
+  "claim_id": "CLAIM-LOT-LI-B",
+  "claim_version": 1,
+  "supplier_id": "SUP-WIDEWORLD",
+  "supplier_name": "Wide World Lithium Chemicals (fictional)",
+  "lot_id": "LOT-LI-B",
+  "material": "lithium",
+  "quantity_kg": 756,
+  "origin_site": "Mine East",
+  "issued_utc": "2026-10-13T08:00:00Z",
+  "signature_note": "Readable copy for human review. The signed supplier claim (Ed25519, dbp-supplier-claim-2) is delivered separately as a partner message."
+}

@@ -1,0 +1,27 @@
+{
+  "document_type": "adverse_media_report",
+  "data_label": "synthetic - fictional companies and places",
+  "report_id": "ADV-MINE-RIDGE-2026-01",
+  "publisher": "Fourth Coffee Supply Watch (fictional NGO)",
+  "published_utc": "2026-10-15T07:00:00Z",
+  "subject_site": "Mine Ridge",
+  "subject_region": "Africa",
+  "material": "cobalt",
+  "related_supplier_id": "SUP-PROSEWARE",
+  "related_lot_ids": [
+    "LOT-CO-B"
+  ],
+  "allegations": [
+    {
+      "topic": "child_labour",
+      "summary": "Interviewees describe minors carrying ore at the mine's artisanal pits during school terms."
+    },
+    {
+      "topic": "unsafe_working_conditions",
+      "summary": "Unsupported pit walls and no protective equipment were reported in two shafts."
+    }
+  ],
+  "evidence_basis": "Field interviews and photographs (not attached); not independently verified.",
+  "requested_action": "Buyers should ask the supplier for its due-diligence findings for the site.",
+  "note": "Fictional report for a synthetic scenario; it names no real place, company or person."
+}

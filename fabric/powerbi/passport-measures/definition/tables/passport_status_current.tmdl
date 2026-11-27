@@ -1,0 +1,158 @@
+/// Newest status of each synthetic battery passport, from the newest app export (v2 columns).
+table passport_status_current
+
+	measure 'Unpublished batteries' = COUNTROWS(FILTER(passport_status_current, NOT(passport_status_current[committed_version] > 0)))
+		formatString: 0
+
+	measure 'Held batteries' = IF(COUNTROWS(ALL(passport_status_current)) = 0, BLANK(), COUNTROWS(FILTER(passport_status_current, passport_status_current[eligibility] = "held" && NOT(passport_status_current[committed_version] > 0))) + 0)
+		formatString: 0
+
+	measure 'Blocked batteries' = IF(COUNTROWS(ALL(passport_status_current)) = 0, BLANK(), COUNTROWS(FILTER(passport_status_current, passport_status_current[eligibility] = "blocked" && NOT(passport_status_current[committed_version] > 0))) + 0)
+		formatString: 0
+
+	measure 'Published batteries (status rows)' = VAR successors = CALCULATETABLE(VALUES(passport_status_current[successor_id]), ALL(passport_status_current)) RETURN IF(COUNTROWS(ALL(passport_status_current)) = 0, BLANK(), COUNTROWS(FILTER(passport_status_current, passport_status_current[committed_version] > 0 && NOT(passport_status_current[battery_id] IN successors))) + 0)
+		formatString: 0
+
+	measure 'Average recycled cobalt share' = VAR successors = CALCULATETABLE(VALUES(passport_status_current[successor_id]), ALL(passport_status_current)) RETURN AVERAGEX(FILTER(passport_status_current, passport_status_current[committed_version] > 0 && NOT(passport_status_current[battery_id] IN successors)), passport_status_current[recycled_co_pct])
+		formatString: 0.0
+
+	measure 'Average recycled lithium share' = VAR successors = CALCULATETABLE(VALUES(passport_status_current[successor_id]), ALL(passport_status_current)) RETURN AVERAGEX(FILTER(passport_status_current, passport_status_current[committed_version] > 0 && NOT(passport_status_current[battery_id] IN successors)), passport_status_current[recycled_li_pct])
+		formatString: 0.0
+
+	measure 'Average recycled nickel share' = VAR successors = CALCULATETABLE(VALUES(passport_status_current[successor_id]), ALL(passport_status_current)) RETURN AVERAGEX(FILTER(passport_status_current, passport_status_current[committed_version] > 0 && NOT(passport_status_current[battery_id] IN successors)), passport_status_current[recycled_ni_pct])
+		formatString: 0.0
+
+	measure 'Produced batteries' = VAR successors = CALCULATETABLE(VALUES(passport_status_current[successor_id]), ALL(passport_status_current)) RETURN COUNTROWS(FILTER(passport_status_current, NOT(passport_status_current[battery_id] IN successors)))
+		formatString: #,0
+
+	measure 'Held display' = IF(ISBLANK([Held batteries]), "Not measured", FORMAT([Held batteries], "#,0"))
+
+	measure 'Blocked display' = IF(ISBLANK([Blocked batteries]), "Not measured", FORMAT([Blocked batteries], "#,0"))
+
+	measure 'Cobalt display' = IF(ISBLANK([Average recycled cobalt share]), "Not measured", FORMAT(DIVIDE([Average recycled cobalt share], 100), "0.0%"))
+
+	measure 'Lithium display' = IF(ISBLANK([Average recycled lithium share]), "Not measured", FORMAT(DIVIDE([Average recycled lithium share], 100), "0.0%"))
+
+	measure 'Nickel display' = IF(ISBLANK([Average recycled nickel share]), "Not measured", FORMAT(DIVIDE([Average recycled nickel share], 100), "0.0%"))
+
+	column export_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: export_id
+
+	column generated_utc
+		dataType: string
+		summarizeBy: none
+		sourceColumn: generated_utc
+
+	column battery_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: battery_id
+
+	column model_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_id
+
+	column plant_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: plant_id
+
+	column batch_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: batch_id
+
+	column chemistry
+		dataType: string
+		summarizeBy: none
+		sourceColumn: chemistry
+
+	column rated_kwh
+		dataType: double
+		summarizeBy: none
+		sourceColumn: rated_kwh
+
+	column eligibility
+		dataType: string
+		summarizeBy: none
+		sourceColumn: eligibility
+
+	column hold_reason
+		dataType: string
+		summarizeBy: none
+		sourceColumn: hold_reason
+
+	column lifecycle_status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: lifecycle_status
+
+	column committed_version
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: committed_version
+
+	column committed_utc
+		dataType: string
+		summarizeBy: none
+		sourceColumn: committed_utc
+
+	column snapshot_state
+		dataType: string
+		summarizeBy: none
+		sourceColumn: snapshot_state
+
+	column footprint_per_kwh
+		dataType: double
+		summarizeBy: none
+		sourceColumn: footprint_per_kwh
+
+	column footprint_verified
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: footprint_verified
+
+	column recycled_co_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recycled_co_pct
+
+	column recycled_li_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recycled_li_pct
+
+	column recycled_ni_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recycled_ni_pct
+
+	column successor_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: successor_id
+
+	column second_life_value_eur_illustrative
+		dataType: double
+		summarizeBy: none
+		sourceColumn: second_life_value_eur_illustrative
+
+	column registry_status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: registry_status
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	partition passport_status_current = entity
+		mode: directLake
+		source
+			entityName: passport_status_current
+			schemaName: dbo
+			expressionSource: DatabaseQuery

@@ -1,0 +1,55 @@
+<!doctype html>
+{% import "_brand.html" as brand %}
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Battery {{ view.battery_id }} · passport card · Contoso Battery AB (publ)</title>
+<style>
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color:#201F1E; background:#FAF9F8; line-height:1.45; }
+  a { color:#005A9E; }
+  a:focus-visible { outline:3px solid #201F1E; outline-offset:2px; }
+  .card { width:min(92vw, 400px); margin:40px auto 16px; background:#fff; border:1px solid #E1DFDD; border-radius:14px; overflow:hidden;
+          box-shadow:0 1px 2px rgba(0,0,0,.04), 0 10px 28px rgba(0,0,0,.08); }
+  .top { height:6px; background:linear-gradient(90deg, #0078D4 0%, #007F82 60%, #3FD0C2 100%); }
+  .head { padding:18px 24px 14px; border-bottom:1px solid #EDEBE9; }
+  .lockup { display:inline-flex; align-items:center; gap:12px; }
+  .lockup-text { display:flex; flex-direction:column; line-height:1.2; text-align:left; }
+  .company { font-size:16px; font-weight:600; } .company .legal { font-weight:400; color:#605E5C; }
+  .product { font-size:13px; color:#605E5C; }
+  .body { padding:18px 24px 22px; text-align:center; }
+  .eyebrow { margin:0; font-size:12.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:#005A9E; }
+  h1 { font-size:28px; font-weight:600; margin:4px 0 0; letter-spacing:-.01em; }
+  .muted { color:#605E5C; font-size:14px; margin:2px 0 0; }
+  .status { display:inline-flex; align-items:center; gap:8px; font-weight:600; font-size:14px; border:1.5px solid; border-radius:999px; padding:4px 12px; margin:14px 0 4px; }
+  .status::before { content:""; width:8px; height:8px; border-radius:50%; background:currentColor; }
+  .tone-good { color:#0E6A0E; background:#F1FAF1; border-color:#107C10; }
+  .tone-warn { color:#7A5600; background:#FFF8E6; border-color:#8A6100; }
+  .qr svg { display:block; width:100%; max-width:250px; height:auto; margin:10px auto; }
+  .url { font-family:"Cascadia Mono", Consolas, "Courier New", monospace; font-size:12.5px; overflow-wrap:anywhere; background:#F1F7FD;
+         border:1.5px dashed #0078D4; border-radius:6px; padding:8px 10px; user-select:all; -webkit-user-select:all; }
+  .foot { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 24px; background:#FBFBFA; border-top:1px solid #EDEBE9; font-size:12.5px; color:#605E5C; }
+  .synthetic { font-weight:600; color:#7A5600; background:#FFF8E6; border:1px solid #E9D6A6; border-radius:999px; padding:2px 10px; white-space:nowrap; }
+  .hint { text-align:center; font-size:14px; color:#605E5C; }
+  @media print { body { background:#fff; } .hint { display:none; } .card { margin:0 auto; box-shadow:none; border-color:#8A8886; } }
+</style>
+</head>
+<body>
+<article class="card">
+  <div class="top"></div>
+  <div class="head">{{ brand.lockup("card", size=52) }}</div>
+  <div class="body">
+    <p class="eyebrow">Digital battery passport</p>
+    <h1>Battery {{ view.battery_id }}</h1>
+    <p class="muted">Model {{ view.model_id }}</p>
+    <span class="status tone-{{ view.status.tone }}">{{ view.status.text }}{% if view.issued %} · version {{ view.version }}{% endif %}</span>
+    <div class="qr">{{ qr }}</div>
+    <div class="url">{{ url }}</div>
+  </div>
+  <div class="foot"><span>Scan or open the link for the public passport.</span><span class="synthetic">{{ banner }}</span></div>
+</article>
+<p class="hint"><a href="/p/{{ view.battery_id }}">Back to the passport</a> · use your browser's print command for a paper card.</p>
+</body>
+</html>

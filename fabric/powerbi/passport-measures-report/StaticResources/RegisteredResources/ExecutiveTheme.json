@@ -1,0 +1,39 @@
+{
+  "name": "Battery passport executive",
+  "dataColors": [
+    "#007F82",
+    "#C50F1F",
+    "#0078D4",
+    "#8A6100",
+    "#332288",
+    "#484644"
+  ],
+  "background": "#FAF9F8",
+  "foreground": "#201F1E",
+  "tableAccent": "#007F82",
+  "good": "#107C10",
+  "neutral": "#8A6100",
+  "bad": "#C50F1F",
+  "textClasses": {
+    "callout": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 29,
+      "color": "#201F1E"
+    },
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12,
+      "color": "#201F1E"
+    },
+    "header": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 11,
+      "color": "#201F1E"
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 11,
+      "color": "#605E5C"
+    }
+  }
+}

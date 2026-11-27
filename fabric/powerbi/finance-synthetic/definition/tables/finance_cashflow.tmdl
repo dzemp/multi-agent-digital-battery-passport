@@ -1,0 +1,126 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_cashflow
+
+	measure 'Base annual cash' = CALCULATE(SUM(finance_cashflow[net_cash_eur]), REMOVEFILTERS(finance_scenarios), finance_cashflow[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Base cumulative cash' = CALCULATE(MAX(finance_cashflow[cumulative_cash_eur]), REMOVEFILTERS(finance_scenarios), finance_cashflow[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Base efficiency cash' = CALCULATE(SUM(finance_cashflow[manual_avoided_eur]) - SUM(finance_cashflow[operating_eur]) - SUM(finance_cashflow[investment_eur]), REMOVEFILTERS(finance_scenarios), finance_cashflow[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Base upside cash' = CALCULATE(SUM(finance_cashflow[premium_eur]) + SUM(finance_cashflow[circular_eur]), REMOVEFILTERS(finance_scenarios), finance_cashflow[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	column scenario
+		dataType: string
+		summarizeBy: none
+		sourceColumn: scenario
+
+	column year
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: year
+
+	column period
+		dataType: string
+		summarizeBy: none
+		sourceColumn: period
+		sortByColumn: year
+
+	column passports
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: passports
+
+	column manual_avoided_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: manual_avoided_eur
+
+	column premium_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: premium_eur
+
+	column circular_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: circular_eur
+
+	column resale_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: resale_eur
+
+	column recovery_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: recovery_eur
+
+	column operating_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: operating_eur
+
+	column investment_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: investment_eur
+
+	column net_cash_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: net_cash_eur
+
+	column discounted_cash_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: discounted_cash_eur
+
+	column discounted_benefit_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: discounted_benefit_eur
+
+	column discounted_cost_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: discounted_cost_eur
+
+	column cumulative_cash_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: cumulative_cash_eur
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_cashflow = m
+		mode: import
+		source =
+			#table(
+				type table [scenario = text, year = Int64.Type, period = text, passports = Int64.Type, manual_avoided_eur = nullable number, premium_eur = nullable number, circular_eur = nullable number, resale_eur = nullable number, recovery_eur = nullable number, operating_eur = nullable number, investment_eur = nullable number, net_cash_eur = nullable number, discounted_cash_eur = nullable number, discounted_benefit_eur = nullable number, discounted_cost_eur = nullable number, cumulative_cash_eur = nullable number, data_label = text, model_version = text],
+				{
+					{"Cautious", 0, "Y0", 0, 0, 0, 0, 0, 0, 0, 1620000.00, -1620000.00, -1620000.00, 0, 1620000.00, -1620000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 1, "Y1", 59400, 1069200.00, 0.00, -59400.00, 217800.00, 277200.00, 716712.00, 0, 293088.00, 1170000.00, 903556.36, 266443.64, -1326912.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 2, "Y2", 91800, 1652400.00, 0.00, -91800.00, 336600.00, 428400.00, 829464.00, 0, 731136.00, 1643801.65, 1039557.02, 604244.63, -595776.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 3, "Y3", 108000, 1944000.00, 0.00, -108000.00, 396000.00, 504000.00, 885840.00, 0, 950160.00, 1758076.63, 1044207.36, 713869.27, 354384.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 0, "Y0", 0, 0, 0, 0, 0, 0, 0, 1800000.00, -1800000.00, -1800000.00, 0, 1800000.00, -1800000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 1, "Y1", 81675, 1470150.00, 653400.00, 33000.00, 600600.00, 567600.00, 794229.00, 0, 1362321.00, 2476500.00, 1238026.36, 1238473.64, -437679.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 2, "Y2", 126225, 2272050.00, 1009800.00, 51000.00, 928200.00, 877200.00, 949263.00, 0, 2383587.00, 3479380.17, 1509473.55, 1969906.62, 1945908.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 3, "Y3", 148500, 2673000.00, 1188000.00, 60000.00, 1092000.00, 1032000.00, 1026780.00, 0, 2894220.00, 3721262.21, 1546791.89, 2174470.32, 4840128.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 0, "Y0", 0, 0, 0, 0, 0, 0, 0, 2070000.00, -2070000.00, -2070000.00, 0, 2070000.00, -2070000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 1, "Y1", 115500, 2079000.00, 2079000.00, 346500.00, 1386000.00, 1039500.00, 911940.00, 0, 3592560.00, 5040000.00, 1774036.36, 3265963.64, 1522560.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 2, "Y2", 178500, 3213000.00, 3213000.00, 535500.00, 2142000.00, 1606500.00, 1131180.00, 0, 5830320.00, 7080991.74, 2262545.45, 4818446.29, 7352880.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 3, "Y3", 210000, 3780000.00, 3780000.00, 630000.00, 2520000.00, 1890000.00, 1240800.00, 0, 6949200.00, 7573253.19, 2352216.38, 5221036.81, 14302080.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

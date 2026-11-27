@@ -1,0 +1,13 @@
+{
+  "document_type": "transport_record",
+  "data_label": "synthetic - fictional companies and places",
+  "record_id": "TR-LOT-LI-B-0422",
+  "lot_id": "LOT-LI-B",
+  "material": "lithium",
+  "quantity_kg": 756,
+  "carrier": "Fabrikam Freight (fictional)",
+  "loaded_at_site": "Mine East",
+  "loaded_utc": "2026-10-05T07:45:00Z",
+  "delivered_to": "PLANT-DE",
+  "delivered_utc": "2026-10-11T15:20:00Z"
+}
