@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Human decision</p>
+    <h1>Watch policy approval</h1>
+    <p class="subtitle">Regulatory Watch proposals are AI-drafted. They remain inactive until a Passport.PolicyApprover activates or rejects them.</p>
+  </div>
+</div>
+{% if done == "activated" %}<div class="panel p-good notice" role="status"><p class="panel-title">Policy version activated</p></div>{% endif %}
+{% if done == "rejected" %}<div class="panel p-info notice" role="status"><p class="panel-title">Recommendation rejected; the active guidance is unchanged</p></div>{% endif %}
+{% if error %}<div class="panel p-bad notice" role="alert"><p class="panel-title">{{ error }}</p></div>{% endif %}
+<section class="section" data-tour="policy-active">
+  <h2>Active guidance · version {{ active.version }}</h2>
+  <div class="card card-body"{% if active.ai_drafted %} data-ai-generated="true" data-provenance-id="{{ active.provenance_id or '' }}"{% endif %}>
+    <h3>{{ active.title }}</h3>
+    <p>{{ active.policy_text }}</p>
+    {% if active.ai_drafted %}
+    <p class="muted small"><span class="pill ai">AI-drafted</span> by the Watch agent (task {{ active.source_task_id }}) · approved by {{ active.activated_by }} at {{ active.activated_utc }}</p>
+    {% else %}
+    <p class="muted small">Baseline written by people · activated by {{ active.activated_by }} at {{ active.activated_utc }}</p>
+    {% endif %}
+  </div>
+</section>
+<section class="section" data-tour="policy-candidates">
+  <h2>Recommendations</h2>
+  {% for candidate in candidates %}
+  {% set mark = candidate.provenance.policy_text if candidate.provenance else None %}
+  <article class="card card-body" style="margin-top:16px" data-ai-generated="{{ 'true' if not mark or mark.ai_generated else 'false' }}" data-provenance-id="{{ candidate.provenance_id or '' }}">
+    <div class="section-head">
+      <h3>{{ candidate.title }}</h3>
+      <span class="status tone-{{ {'approved': 'good', 'rejected': 'bad'}.get(candidate.status, 'warn') }}">{{ candidate.status }}</span>
+    </div>
+    <p class="small"><span class="pill ai">{{ 'AI-drafted' if not mark or mark.ai_generated else 'Scripted draft (not AI)' }}</span>
+      by the Watch agent ({{ candidate.model or 'model not recorded' }}{% if candidate.model_version %}, {{ candidate.model_version }}{% endif %}, task {{ candidate.task_id }})</p>
+    <p>{{ candidate.policy_text }}</p>
+    <p class="muted small">Sources: {{ candidate.source_ids }} · Requested by {{ candidate.requested_by }} at {{ candidate.recommended_utc }}</p>
+    {% if candidate.status == "pending" %}
+    <form method="post" action="/policy/{{ candidate.candidate_id }}/activate">
+      <input type="hidden" name="expected_row_version" value="{{ candidate.row_version }}">
+      <label for="reason-{{ candidate.candidate_id }}">Approval rationale</label>
+      <textarea id="reason-{{ candidate.candidate_id }}" name="reason" minlength="5" maxlength="400" required></textarea>
+      <button class="btn btn-primary btn-sm" type="submit">Activate as next guidance version</button>
+    </form>
+    <form method="post" action="/policy/{{ candidate.candidate_id }}/reject" style="margin-top:12px">
+      <input type="hidden" name="expected_row_version" value="{{ candidate.row_version }}">
+      <label for="reject-{{ candidate.candidate_id }}">Rejection reason</label>
+      <textarea id="reject-{{ candidate.candidate_id }}" name="reason" minlength="5" maxlength="400" required></textarea>
+      <button class="btn btn-secondary btn-sm" type="submit">Reject recommendation</button>
+    </form>
+    {% else %}
+    <p class="muted small">{{ 'Approved' if candidate.status == 'approved' else 'Rejected' }} by {{ candidate.decided_by }} at {{ candidate.decided_utc }} · {{ candidate.decision_reason }}</p>
+    {% endif %}
+  </article>
+  {% else %}
+  <div class="card card-body"><p>No Watch recommendation is awaiting review.</p></div>
+  {% endfor %}
+</section>
+{% endblock %}

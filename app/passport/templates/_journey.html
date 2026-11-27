@@ -1,0 +1,44 @@
+<aside class="journey-guide no-print" aria-labelledby="journey-title"
+       data-target="{{ guide.stop.selector if guide.here else '' }}">
+  <div class="journey-top">
+    <span class="pill">Stop {{ guide.index }} of {{ guide.total }}</span>
+    <form method="post" action="/journey">
+      <button type="submit" class="journey-exit" name="step" value="exit" aria-label="End guided journey">End tour</button>
+    </form>
+  </div>
+  <progress value="{{ guide.index }}" max="{{ guide.total }}" aria-label="Journey position"></progress>
+  <p class="eyebrow">{{ guide.label }} tour</p>
+  <h2 id="journey-title" tabindex="-1">{{ guide.stop.title }}</h2>
+  <p class="journey-series">{{ guide.series or "Shared guidance" }} &middot; {{ guide.label }}</p>
+  <details class="journey-copy" open>
+  <summary>{{ "Not ready yet - see what's needed" if guide.missing else "Why this step matters" }}</summary>
+  <p>{{ guide.stop.message }}</p>
+  <div class="journey-instruction"><strong>What to do on this step</strong><p>{{ guide.stop.action }}</p></div>
+  {% if guide.missing %}
+  <div class="journey-wait" role="status"><strong>Not ready at this stop</strong><p>{{ guide.missing }}</p></div>
+  {% endif %}
+  <p class="small" data-highlight-note role="status"></p>
+  <div class="journey-tools">
+    <form method="post" action="/journey">
+      <input type="hidden" name="persona" value="{{ guide.profile }}">
+      <input type="hidden" name="series" value="{{ guide.series }}">
+      <button class="btn btn-secondary btn-sm" name="step" value="{{ guide.stop.key }}">{{ "Refresh this stop" if guide.here else "Open this stop" }}</button>
+    </form>
+    <a href="/journey">All stops</a>
+  </div>
+  </details>
+  <div class="journey-controls">
+    <form method="post" action="/journey">
+      <input type="hidden" name="persona" value="{{ guide.profile }}">
+      <input type="hidden" name="series" value="{{ guide.series }}">
+      <button class="btn btn-secondary" name="step" value="{{ guide.previous or guide.stop.key }}"{% if not guide.previous %} disabled{% endif %}>Back</button>
+    </form>
+    <form method="post" action="/journey">
+      <input type="hidden" name="persona" value="{{ guide.profile }}">
+      <input type="hidden" name="series" value="{{ guide.series }}">
+      <button class="btn btn-primary" name="step" value="{{ guide.next or 'exit' }}">{{ "Next" if guide.next else "Finish tour" }}</button>
+    </form>
+  </div>
+  <p class="journey-footnote">Navigation only. Unsaved form entries are not carried between stops.
+    Back does not undo decisions. Escape focuses End tour.</p>
+</aside>

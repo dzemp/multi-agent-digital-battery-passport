@@ -1,0 +1,52 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_sensitivity
+
+	measure 'Lower-input NPV' = SUM(finance_sensitivity[lower_input_npv_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Higher-input NPV' = SUM(finance_sensitivity[higher_input_npv_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	column driver
+		dataType: string
+		summarizeBy: none
+		sourceColumn: driver
+
+	column lower_input_npv_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: lower_input_npv_eur
+
+	column higher_input_npv_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: higher_input_npv_eur
+
+	column change
+		dataType: string
+		summarizeBy: none
+		sourceColumn: change
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_sensitivity = m
+		mode: import
+		source =
+			#table(
+				type table [driver = text, lower_input_npv_eur = nullable number, higher_input_npv_eur = nullable number, change = text, data_label = text, model_version = text],
+				{
+					{"Manual cost per passport", 2538352.23, 4627348.93, "-/+20 percent", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Recurring operating cost", 4038445.83, 3127255.32, "-/+20 percent", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Premium revenue", 3118629.09, 4047072.06, "-/+20 percent", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Circular contribution", 3559405.05, 3606296.10, "-/+20 percent", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Discount rate", 3802475.15, 3376587.63, "-/+2 percentage points", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

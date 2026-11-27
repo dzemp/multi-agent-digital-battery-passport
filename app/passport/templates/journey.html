@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Your role. Your workflow.</p>
+    <h1>{{ tour_label ~ " tour" if stops else "Choose your persona" }}</h1>
+    <p class="subtitle">{% if stops %}{{ stops|length }} steps for {{ tour_label }}. Stay in this role from start to finish.
+      {% else %}Use View as to choose whose workflow you want to explore.{% endif %}</p>
+  </div>
+</div>
+<div class="panel p-blue notice">
+  <p class="panel-title">A guide for your selected persona</p>
+  <p>Next and Back stay within this role. To explore another role, change View as yourself.
+    Switching during a tour starts the new persona's tour at its first step, using the same series.
+    If no series was selected, choose one first.</p>
+  <p class="small">Navigation never approves, publishes,
+    resets data or calls a model. Decisions you submit are real, audited actions in this synthetic environment.</p>
+</div>
+{% if stops %}
+<form method="post" action="/journey" class="journey-start">
+  <input type="hidden" name="persona" value="{{ tour_profile }}">
+  {% if tour_profile == "policy" %}
+  <input type="hidden" name="series" value="{{ chosen_series }}">
+  {% else %}
+  {% if series_list %}
+  <input type="hidden" name="series" value="{{ chosen_series }}">
+  <p class="small muted">{% if chosen_series %}{{ scope.label }}{% else %}Choose one production series above to start a single-series tour.{% endif %}</p>
+  {% else %}
+  <label for="journey-series">Production series</label>
+  <input id="journey-series" name="series" value="{{ chosen_series }}" maxlength="64" required
+         placeholder="SERIES-MAIN" aria-describedby="series-help">
+  <p class="small muted" id="series-help">Use the series identifier supplied by Operations, such as SERIES-MAIN
+    for the default synthetic scenario. Your role does not list internal production series.</p>
+  {% endif %}
+  {% endif %}
+  <label for="journey-stop">Starting point</label>
+  <select id="journey-stop" name="step">
+    {% for stop in stops %}
+    <option value="{{ stop.key }}">{{ loop.index }}. {{ stop.title }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-primary" type="submit"{% if series_list and not chosen_series and tour_profile != "policy" %} disabled{% endif %}>Start journey</button>
+</form>
+{% else %}
+<div class="panel p-amber notice">
+  <p class="panel-title">{{ "No tour for this persona" if tour_profile else "Choose one role to begin" }}</p>
+  <p>{% if tour_profile %}Authority and Administrator do not have guided tours.
+    {% else %}All assigned roles is not a combined tour. Choose an available persona in View as first.{% endif %}</p>
+</div>
+{% endif %}
+<div class="journey-chapters">
+{% for stop in stops %}
+  <section class="card card-body">
+    <h2>{{ loop.index }}. {{ stop.title }}</h2>
+    <p class="small" style="margin-top:8px">{{ stop.message }}</p>
+  </section>
+{% endfor %}
+</div>
+<p class="note">Use View as to inspect one role at a time without signing out. Your authenticated identity remains
+  accountable; switching cannot add Entra roles. Synthetic values are not legal assurance, realized revenue,
+  measured model quality or evidence of tenant execution. A fresh run needs a new series tag, not a tour restart.</p>
+{% endblock %}

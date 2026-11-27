@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% block style %}
+  .labels { display:flex; gap:6px; flex-wrap:wrap; }
+  fieldset { border:0; padding:0; margin:0 0 18px; }
+  legend { font-weight:600; margin-bottom:6px; }
+  .choice { display:flex; gap:12px; align-items:center; background:var(--white); border:1.5px solid var(--line-strong); border-radius:8px;
+            padding:12px 16px; margin:8px 0; cursor:pointer; }
+  .choice input { width:18px; height:18px; accent-color:var(--teal); }
+  label.field { display:block; font-weight:600; margin:12px 0 6px; }
+  label.field span { font-weight:400; color:var(--muted); }
+  textarea { width:100%; font:inherit; padding:10px 12px; border:1.5px solid var(--line-strong); border-radius:6px; background:var(--white); }
+  .form-actions { display:flex; align-items:center; gap:18px; margin-top:16px; }
+  .form-actions p { margin:0; font-size:14px; color:var(--muted); max-width:520px; }
+{% endblock %}
+{% block content %}
+{% if view %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Second-life request {{ view.request_id }} · battery {{ view.battery_id }}</p>
+    <h1>Battery {{ view.battery_id }}: {{ 'second-life decision needed' if view.open else 'second life ' + view.state|lower }}</h1>
+    <p class="subtitle">Requested by {{ view.requested_by }} on {{ view.requested_when }} for {{ view.intended_use }}.</p>
+    <p class="labels">{% for label in view.labels %}<span class="pill">{{ label }}</span>{% endfor %}</p>
+  </div>
+  <span class="status big tone-{{ view.tone }}">{{ view.state }}</span>
+</div>
+
+{% if done %}
+<div class="panel p-good notice" role="status">
+  <p class="panel-title">{{ brand.icon("shield", 20) }} Decision recorded.</p>
+  <p style="margin:0">The application committed the new passport versions.</p>
+  <p class="notice-actions"><a class="btn btn-primary btn-sm" href="/exec">Back to passport readiness</a>
+    <a class="btn btn-secondary btn-sm" href="/second-life">Back to second-life approvals</a></p>
+</div>
+{% endif %}
+
+<section class="panel p-amber" aria-labelledby="facts">
+  <span class="pill corner">Signed request</span>
+  <h2 class="panel-title" id="facts">{{ brand.icon("battery", 20) }} What the operator asks for</h2>
+  <dl class="facts">
+    <dt>Safety assessment</dt><dd>{{ view.safety_ref }}</dd>
+    <dt>Latest state of health</dt><dd>{{ view.soh_pct }} % (minimum {{ view.minimum_soh_pct }} %)</dd>
+    <dt>Successor passport</dt><dd>{{ view.successor_id }}</dd>
+    <dt>Illustrative value</dt><dd>{{ view.value }} <span class="muted">({{ view.value_label }}; {{ view.value_basis }})</span></dd>
+    <dt>Passport status</dt><dd>{{ view.status }} · holder {{ view.holder }}</dd>
+    {% for link in view.links %}<dt>{{ link.text }}</dt><dd><a href="{{ link.url }}">{{ link.battery_id }}</a></dd>{% endfor %}
+  </dl>
+</section>
+
+<section class="section" aria-labelledby="decision">
+{% if view.open and view.can_decide %}
+  <div class="section-head"><h2 id="decision">Your decision</h2></div>
+  {% if error %}<div class="panel p-bad notice" role="alert"><p style="margin:0"><strong>Not recorded.</strong> {{ error }}</p></div>{% endif %}
+  <form method="post" action="/second-life/{{ view.request_id }}/decision" class="panel p-teal">
+    <span class="pill corner">Human decision</span>
+    <fieldset>
+      <legend>Decision</legend>
+      <label class="choice"><input type="radio" name="decision" value="approve" required {% if form.decision == "approve" %}checked{% endif %}><span><strong>Approve the second life</strong> <span class="muted">(closes this passport and creates {{ view.successor_id }})</span></span></label>
+      <label class="choice"><input type="radio" name="decision" value="reject" {% if form.decision == "reject" %}checked{% endif %}><span><strong>Reject</strong> <span class="muted">(the passport returns to active)</span></span></label>
+    </fieldset>
+    <label class="field" for="reason">Reason <span>(5 to 400 characters, kept in the audit trail)</span></label>
+    <textarea id="reason" name="reason" rows="3" minlength="5" maxlength="400" required>{{ form.reason or '' }}</textarea>
+    <input type="hidden" name="command_id" value="{{ command_id }}">
+    <input type="hidden" name="expected_row_version" value="{{ view.row_version }}">
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Record decision</button>
+      <p>Check the safety assessment reference before approving. The Lifecycle agent cannot approve or reject.</p>
+    </div>
+  </form>
+{% elif view.open %}
+  <div class="section-head"><h2 id="decision">Decision</h2></div>
+  <div class="panel p-info" role="status"><p style="margin:0">You can view this request. Only Passport.Reviewer can record the decision.</p></div>
+{% else %}
+  <div class="section-head"><h2 id="decision">Decision</h2></div>
+  <div class="panel p-teal"><p style="margin:0">{{ view.state }} by {{ view.decided_by }} on {{ view.decided_when }}: {{ view.decision_reason }}</p></div>
+{% endif %}
+</section>
+{% else %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Lifecycle and second life</p>
+    <h1>Second-life approvals</h1>
+    <p class="subtitle">A second-life operator asks to repurpose a battery; a Reviewer approves or rejects. Approval closes the passport and creates a linked successor passport.</p>
+  </div>
+  <span class="status big tone-info">{{ labels|join(" · ") }}</span>
+</div>
+
+<section class="section" aria-labelledby="list">
+  <div class="section-head"><h2 id="list">Requests</h2></div>
+{% if rows %}
+  <div class="card table-card">
+  <table>
+    <thead><tr><th scope="col">Request</th><th scope="col">Battery</th><th scope="col">Successor</th><th scope="col">State</th>
+      <th scope="col">Requested</th><th scope="col">Requested by</th><th scope="col">State of health</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr><th scope="row"><a href="{{ row.url }}">{{ row.request_id }}</a></th><td>{{ row.battery_id }}</td>
+        <td>{{ row.successor_id }}</td><td><span class="status tone-{{ row.tone }}">{{ row.state }}</span></td>
+        <td>{{ row.requested_when }}</td><td>{{ row.requested_by }}</td><td class="num">{{ row.soh_pct }} %</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No second-life request has arrived.</p></div>
+{% endif %}
+</section>
+{% endif %}
+{% endblock %}

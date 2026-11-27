@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% block style %}
+  .compare thead th small { display:block; font-weight:400; text-transform:none; letter-spacing:0; font-size:13px; color:var(--muted); }
+  .compare tbody th { font-weight:600; }
+  .compare tr.differs { background:var(--amber-tint); }
+  .compare tr.differs th { box-shadow:inset 4px 0 0 var(--amber); }
+  .compare td .status { margin-left:8px; }
+  .affected { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; font-size:14px; }
+  .docs { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:12px; }
+  .docs li { display:flex; align-items:center; gap:10px; background:var(--white); border:1px solid var(--line); border-radius:8px;
+             padding:10px 14px; font-size:14px; box-shadow:var(--shadow); }
+  .docs .icon { color:var(--blue-ink); }
+  .docs .tag { color:var(--blue-ink); background:var(--blue-tint); border-color:#B4D6FA; }
+  .docs .tag.used { color:var(--green-ink); background:var(--green-tint); border-color:#9FD89F; }
+  fieldset { border:0; padding:0; margin:0 0 18px; }
+  legend { font-weight:600; margin-bottom:6px; }
+  .choice { display:flex; gap:12px; align-items:center; background:var(--white); border:1.5px solid var(--line-strong); border-radius:8px;
+            padding:12px 16px; margin:8px 0; cursor:pointer; }
+  .choice:has(input:checked) { border-color:var(--teal); box-shadow:0 0 0 1px var(--teal); }
+  .choice input { width:18px; height:18px; accent-color:var(--teal); }
+  label.field { display:block; font-weight:600; margin-bottom:6px; }
+  label.field span { font-weight:400; color:var(--muted); }
+  textarea { width:100%; font:inherit; padding:10px 12px; border:1.5px solid var(--line-strong); border-radius:6px; background:var(--white); }
+  .form-actions { display:flex; align-items:center; gap:18px; margin-top:16px; }
+  .form-actions p { margin:0; font-size:14px; color:var(--muted); max-width:520px; }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Hold {{ view.review_id }} · supplier lot {{ view.lot_id }}</p>
+  {% if view.open %}
+    <h1>Supplier lot {{ view.lot_id }} needs a human decision</h1>
+  {% else %}
+    <h1>Supplier lot {{ view.lot_id }}: hold resolved</h1>
+  {% endif %}
+    <p class="subtitle">Raised by the {{ view.opened_by }} on {{ view.opened_when }}; {{ 'open for' if view.open else 'took' }} {{ view.age }}.</p>
+  </div>
+  {% if view.open %}<span class="status big tone-warn">On hold - waiting for a reviewer</span>
+  {% else %}<span class="status big tone-good">Resolved - checks re-ran</span>{% endif %}
+</div>
+
+{% if done %}
+<div class="panel p-good notice" role="status">
+  <p class="panel-title">{{ brand.icon("shield", 20) }} Decision recorded.</p>
+  <p style="margin:0">The application re-ran its checks. The agents now reassess the affected batteries and publish only if
+    every gate passes - you did not publish anything.</p>
+  <p class="notice-actions"><a class="btn btn-primary btn-sm" href="/exec">Back to passport readiness</a></p>
+</div>
+{% endif %}
+
+<section class="panel p-amber" aria-labelledby="why">
+  <span class="pill corner{% if view.reason_ai %} ai{% endif %}">{{ view.reason_label }}</span>
+  <h2 class="panel-title" id="why">{{ brand.icon("hold", 20) }} {{ 'Why it is on hold' if view.open else 'Why it was on hold' }}</h2>
+  <p style="font-size:17px; margin:0"{% if view.reason_ai %} data-ai-generated="true" data-provenance-id="{{ view.provenance_id }}"{% endif %}>{{ view.reason }}</p>
+  <div class="affected"><span class="muted">Affected batteries:</span>
+  {% for battery in view.batteries %}<strong>{{ battery.battery_id }}</strong> <span class="status tone-{{ battery.status.tone }}">{{ battery.status.text }}</span>{% endfor %}
+  </div>
+</section>
+
+{% if view.comparison %}
+<section class="section" aria-labelledby="compare">
+  <div class="section-head"><h2 id="compare">Supplier claim and transport record</h2><p>Rows where the two disagree are highlighted.</p></div>
+  <div class="card table-card">
+  <table class="compare">
+    <thead><tr>
+      <th scope="col">Field</th>
+      <th scope="col">Supplier claim<small>{{ view.comparison.claim_name }}</small></th>
+      <th scope="col">Transport record<small>{{ view.comparison.transport_name }}</small></th>
+      {% if view.comparison.has_correction %}<th scope="col">Corrected claim<small>{{ view.comparison.correction_name }}</small></th>{% endif %}
+    </tr></thead>
+    <tbody>
+    {% for row in view.comparison.rows %}
+      <tr{% if row.differs %} class="differs"{% endif %}>
+        <th scope="row">{{ row.label }}</th>
+        <td>{{ row.claim }}{% if row.differs %}<span class="status tone-bad">Differs</span>{% endif %}</td>
+        <td>{{ row.transport }}</td>
+        {% if view.comparison.has_correction %}<td>{{ row.correction }}{% if row.fixed and row.differs %}<span class="status tone-good">Matches transport</span>{% endif %}</td>{% endif %}
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if view.comparison.unreadable %}<p class="small muted" style="margin-top:10px">Not shown because the file is not small, intact JSON: {{ view.comparison.unreadable|join(", ") }}.</p>{% endif %}
+</section>
+{% endif %}
+
+<section class="section" aria-labelledby="docs">
+  <div class="section-head"><h2 id="docs">Documents on file</h2>
+    {% if not view.comparison %}<p>Only a Passport.Reviewer or Passport.Compliance can read document content; only a Passport.Reviewer records the decision.</p>{% endif %}</div>
+  <ul class="docs">
+  {% for doc in view.documents %}
+    <li>{{ brand.icon("evidence", 20) }}<span><strong>{{ doc.file_name }}</strong><br><span class="muted">{{ doc.kind }} · {{ doc.uploaded }}</span></span>
+      {% if doc.opening %}<span class="tag">when the hold opened</span>{% endif %}{% if doc.used_to_resolve %}<span class="tag used">used to resolve</span>{% endif %}</li>
+  {% endfor %}
+  </ul>
+</section>
+
+<section class="section" aria-labelledby="decision">
+{% if view.open and view.can_resolve %}
+  <div class="section-head"><h2 id="decision">Your decision</h2></div>
+  {% if error %}<div class="panel p-bad notice" role="alert"><p style="margin:0"><strong>Not recorded.</strong> {{ error }}</p></div>{% endif %}
+  {% if view.candidates %}
+  <form method="post" action="/holds/{{ view.review_id }}/resolve" class="panel p-teal">
+    <span class="pill corner">Human decision</span>
+    <fieldset>
+      <legend>Which new document resolves the concern?</legend>
+      {% for doc in view.candidates %}
+      <label class="choice"><input type="radio" name="evidence_id" value="{{ doc.evidence_id }}" required
+        {% if doc.evidence_id == chosen %}checked{% endif %}><span><strong>{{ doc.file_name }}</strong> <span class="muted">({{ doc.kind }}, {{ doc.uploaded }})</span></span></label>
+      {% endfor %}
+    </fieldset>
+    <label class="field" for="reason">Reason <span>(5 to 400 characters, kept in the audit trail)</span></label>
+    <textarea id="reason" name="reason" rows="3" minlength="5" maxlength="400" required>{{ reason }}</textarea>
+    <input type="hidden" name="command_id" value="{{ command_id }}">
+    <input type="hidden" name="expected_row_version" value="{{ view.row_version }}">
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Record decision and re-run checks</button>
+      <p>You do not publish. The application re-runs its checks; the Issuance agent publishes only if every gate passes.</p>
+    </div>
+  </form>
+  {% else %}
+  <div class="panel p-info" role="status"><p style="margin:0">No new document is on file for this lot since the hold opened, and a decision must cite one. The supplier's corrected claim normally arrives through the connector. A Reviewer can also upload a document for {{ view.lot_id }} under Upload evidence on the <a href="/">operations console</a>, then return here.</p></div>
+  {% endif %}
+{% elif view.open %}
+  <div class="section-head"><h2 id="decision">Decision</h2></div>
+  <div class="panel p-info" role="status"><p style="margin:0">You can view this hold. Only a Passport.Reviewer can record the decision.</p></div>
+{% else %}
+  <div class="section-head"><h2 id="decision">Decision</h2></div>
+  <div class="panel p-teal">
+    <span class="pill corner">Human decision</span>
+    <p class="panel-title">{{ brand.icon("person", 20) }} {{ view.resolved_by }} resolved this hold on {{ view.resolved_when }}</p>
+    <p style="margin:0"><span class="muted">Reason given:</span> {{ view.resolution_reason }}</p>
+  </div>
+{% endif %}
+</section>
+{% endblock %}

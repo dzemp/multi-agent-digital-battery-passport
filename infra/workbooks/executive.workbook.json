@@ -1,0 +1,110 @@
+{
+  "version": "Notebook/1.0",
+  "isLocked": false,
+  "fallbackResourceIds": ["__APPLICATION_INSIGHTS_ID__"],
+  "items": [
+    {
+      "type": 1,
+      "name": "scope",
+      "content": {
+        "json": "# Executive service and cost\n**Synthetic data - not a legal passport.** CEO / CFO / CSO. Each series is separate; never add series together. Coverage uses the latest complete state snapshot, including held batteries in the denominator, not the number of publication events. The app's executive screen remains the panel view.\n\n**No rows means not instrumented, no data in this window, or no permission - not zero risk.** Snapshots older than 15 minutes are stale. The success measures and per-plant rows use the app's single measure definition; synthetic data, illustrative footprints and second-life values. Inference estimates below are USD and exclude hosting, SQL, Fabric, monitoring and labour; they are not total cost per passport. See the telemetry contract in the MVP documentation."
+      }
+    },
+    {
+      "type": 9,
+      "name": "time",
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {"id": "time-range", "name": "TimeRange", "type": 4, "isRequired": true, "value": {"durationMs": 86400000}, "typeSettings": {"selectableValues": [{"durationMs": 3600000}, {"durationMs": 86400000}, {"durationMs": 604800000}], "allowCustom": true}}
+        ],
+        "style": "pills"
+      }
+    },
+    {
+      "type": 3,
+      "name": "measures",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Success measures from the latest series snapshot - synthetic data, illustrative values",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"passport.series.snapshot\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend series = tostring(customDimensions.series_id)\n| where isnotempty(series)\n| summarize arg_max(timestamp, *) by series\n| extend measures = pack_array(pack(\"measure\", \"Passport coverage % (synthetic)\", \"value\", todouble(customMeasurements.coverage_pct)), pack(\"measure\", \"Verified footprint batteries (synthetic, illustrative footprint)\", \"value\", todouble(customMeasurements.verified_footprint_batteries)), pack(\"measure\", \"Supplier data completeness % (synthetic)\", \"value\", todouble(customMeasurements.supplier_completeness_pct)), pack(\"measure\", \"Second life batteries (synthetic)\", \"value\", todouble(customMeasurements.second_life_count)), pack(\"measure\", \"Second life value EUR (illustrative)\", \"value\", todouble(customMeasurements.second_life_value_eur_illustrative)), pack(\"measure\", \"Batteries pending over 15 minutes\", \"value\", tolong(customMeasurements.stuck_batteries)))\n| mv-expand item = measures\n| project tile = strcat(series, \" - \", tostring(item.measure)), value = todouble(item.value), observed_at = timestamp, freshness = iff(timestamp < ago(15m), \"STALE - recheck source\", \"Recent snapshot\")\n| order by tile asc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "tiles",
+        "tileSettings": {"titleContent": {"columnMatch": "tile"}, "leftContent": {"columnMatch": "value", "formatter": 12, "numberFormat": {"unit": 0, "options": {"maximumFractionDigits": 1}}}, "secondaryContent": {"columnMatch": "freshness"}, "showBorder": true}
+      }
+    },
+    {
+      "type": 3,
+      "name": "plants",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Measures per plant from the latest plant snapshot - synthetic data, illustrative footprint",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"passport.plant.snapshot\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend series = tostring(customDimensions.series_id), plant = tostring(customDimensions.plant_id)\n| where isnotempty(series) and isnotempty(plant)\n| summarize arg_max(timestamp, *) by series, plant\n| project series, plant, observed_at = timestamp, produced = tolong(customMeasurements.produced), published = tolong(customMeasurements.published), coverage_percent = todouble(customMeasurements.coverage_pct), verified_footprint_batteries = tolong(customMeasurements.verified_footprint_batteries), avg_kg_co2e_per_kwh_illustrative = todouble(customMeasurements.avg_footprint_per_kwh)\n| order by series asc, plant asc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "coverage",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Latest complete series snapshot - coverage, holds and freshness",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"passport.series.snapshot\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend series = tostring(customDimensions.series_id)\n| where isnotempty(series)\n| summarize arg_max(timestamp, *) by series\n| extend total = tolong(customMeasurements.total_batteries), published = tolong(customMeasurements.published_valid)\n| project series, observed_at = timestamp, freshness = iff(timestamp < ago(15m), \"STALE - recheck source\", \"Recent snapshot\"), total, published, coverage_percent = iff(total > 0 and published >= 0 and published <= total, round(100.0 * published / total, 1), real(null)), holds_open = tolong(customMeasurements.holds_open), oldest_hold_minutes = todouble(customMeasurements.oldest_hold_minutes), stuck_batteries = tolong(customMeasurements.stuck_batteries)\n| order by series asc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "public-reads",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Public passport reads - observed request success and p95 (not an uptime SLA)",
+        "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\"\n| where name in (\"GET /passports/{battery_id}\", \"GET /p/{id}\")\n| summarize observed_requests = count(), failed = countif(success == false), p95_ms = percentile(duration, 95) by bin(timestamp, 1h)\n| extend success_percent = 100.0 * (observed_requests - failed) / observed_requests\n| order by timestamp asc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "publications",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Distinct batteries published each day (not current valid coverage)",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"passport.published\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend series = tostring(customDimensions.series_id), battery = tostring(customDimensions.battery_id)\n| where isnotempty(series) and isnotempty(battery)\n| summarize by series, battery, day = bin(timestamp, 1d)\n| summarize batteries = count() by series, day\n| order by day asc, series asc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "cost",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Inference-only estimate per published battery, matched by series and run",
+        "query": "let events = materialize(customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| where name in (\"agent.run\", \"passport.published\")\n| extend series = tostring(customDimensions.series_id), run = tostring(customDimensions.run_id), event = tostring(customDimensions.event_id)\n| where isnotempty(series) and isnotempty(run) and isnotempty(event)\n| summarize arg_max(timestamp, *) by event, name, series, run);\nlet published = events | where name == \"passport.published\" | extend battery = tostring(customDimensions.battery_id) | where isnotempty(battery) | summarize by series, run, battery | summarize published_batteries = count() by series, run;\nevents\n| where name == \"agent.run\"\n| extend cost = todouble(customMeasurements.estimated_cost_usd)\n| summarize agent_runs = count(), missing_cost_runs = countif(isnull(cost)), reported_estimate_usd = sum(cost) by series, run\n| join kind=leftouter published on series, run\n| project series, run, agent_runs, missing_cost_runs, published_batteries, reported_estimate_usd = iff(missing_cost_runs == 0, reported_estimate_usd, real(null)), inference_usd_per_published_battery = iff(missing_cost_runs == 0 and published_batteries > 0, reported_estimate_usd / published_batteries, real(null))",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    }
+  ]
+}

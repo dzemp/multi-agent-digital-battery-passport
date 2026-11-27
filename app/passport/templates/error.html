@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Battery Passport</p>
+    <h1>{{ title }}</h1>
+    <p class="subtitle">{{ text }}</p>
+  </div>
+</div>
+{% if login %}<p><a class="btn btn-primary" href="{{ login }}">Sign in</a></p>{% endif %}
+{% endblock %}

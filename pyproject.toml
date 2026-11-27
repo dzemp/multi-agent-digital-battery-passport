@@ -1,0 +1,14 @@
+[project]
+name = "battery-passport-mvp"
+version = "0.1.0"
+description = "Synthetic battery passport MVP on Azure: one bootstrap for the network, Fabric, Foundry, developer VM and passport app."
+requires-python = ">=3.14"
+# Stage A (python -m dbp_mvp bootstrap) uses only the standard library and Azure CLI.
+# The developer VM installs requirements.txt for stage B and the app.
+
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "E501", "B"]

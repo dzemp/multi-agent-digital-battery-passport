@@ -1,0 +1,3 @@
+# Stage B and the passport app, installed into .venv on the developer VM.
+# Stage A on the laptop needs no packages: only Python 3.14+ and Azure CLI.
+-r app/requirements.txt

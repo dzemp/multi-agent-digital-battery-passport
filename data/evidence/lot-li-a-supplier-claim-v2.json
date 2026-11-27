@@ -1,0 +1,16 @@
+{
+  "document_type": "supplier_sourcing_claim",
+  "data_label": "synthetic - fictional companies and places",
+  "claim_id": "CLAIM-LOT-LI-A",
+  "claim_version": 2,
+  "supplier_id": "SUP-NORTHWIND",
+  "supplier_name": "Northwind Lithium Refining (fictional)",
+  "lot_id": "LOT-LI-A",
+  "material": "lithium",
+  "quantity_kg": 100,
+  "origin_site": "Mine South",
+  "issued_utc": "2026-10-16T09:15:00Z",
+  "replaces_claim_version": 1,
+  "correction_reason": "Origin site was entered incorrectly in version 1.",
+  "signature_note": "Readable copy for human review. The signed supplier claim (Ed25519, dbp-supplier-claim-2) is delivered separately as a partner message."
+}

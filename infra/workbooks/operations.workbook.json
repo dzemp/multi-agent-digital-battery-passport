@@ -1,0 +1,137 @@
+{
+  "version": "Notebook/1.0",
+  "isLocked": false,
+  "fallbackResourceIds": ["__APPLICATION_INSIGHTS_ID__"],
+  "items": [
+    {
+      "type": 1,
+      "name": "scope",
+      "content": {
+        "json": "# Platform operations and security\n**Synthetic data - not a legal passport.** CIO / CISO / SRE. Server requests and dependencies require app instrumentation with service name `passport-app`. Business panels require the passport app's event contract. **No rows is unknown, not healthy.** Request counts are observed telemetry, not a measured SLA; ingestion caps, sampling and delays can hide incidents.\n\nUse the parent Application Insights resource's **Alerts** blade for fired alert state. Use Container Apps **Metrics** and its existing Log Analytics workspace for replicas/restarts: those platform metrics are not Application Insights request telemetry. Easy Auth can reject a request before FastAPI sees it; use platform authentication logs for those denials. Workbook layout does not restrict access to the underlying traces."
+      }
+    },
+    {
+      "type": 9,
+      "name": "time",
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {"id": "time-range", "name": "TimeRange", "type": 4, "isRequired": true, "value": {"durationMs": 86400000}, "typeSettings": {"selectableValues": [{"durationMs": 3600000}, {"durationMs": 86400000}, {"durationMs": 604800000}], "allowCustom": true}}
+        ],
+        "style": "pills"
+      }
+    },
+    {
+      "type": 3,
+      "name": "requests",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "App requests by route template - observed errors and p95",
+        "query": "requests\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\"\n| summarize observed_requests = count(), failures = countif(success == false), unauthorized = countif(resultCode in (\"401\", \"403\")), p95_ms = percentile(duration, 95) by route = name\n| order by failures desc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "dependencies",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "SQL, Blob and Foundry dependency health - no SQL text or URLs with query strings",
+        "query": "dependencies\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\"\n| summarize observed_calls = count(), failures = countif(success == false), p95_ms = percentile(duration, 95) by type, target\n| order by failures desc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "outbox",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Latest outbox backlog per series - state, not a sum of retry events",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"passport.series.snapshot\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend series = tostring(customDimensions.series_id)\n| where isnotempty(series)\n| summarize arg_max(timestamp, *) by series\n| project series, timestamp, freshness = iff(timestamp < ago(15m), \"STALE - check worker\", \"Recent snapshot\"), pending = tolong(customMeasurements.outbox_pending), oldest_pending_minutes = todouble(customMeasurements.oldest_outbox_minutes)",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "connector",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Connector messages by type, result and reason code",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"connector.message\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend event = tostring(customDimensions.event_id)\n| where isnotempty(event)\n| summarize arg_max(timestamp, *) by name, event\n| summarize observed_messages = count() by message_type = tostring(customDimensions.message_type), result = tostring(customDimensions.result), reason_code = tostring(customDimensions.reason_code)\n| order by observed_messages desc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "lifecycle",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Lifecycle events recorded, already recorded or quarantined",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"lifecycle.event\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend event = tostring(customDimensions.event_id)\n| where isnotempty(event)\n| summarize arg_max(timestamp, *) by name, event\n| summarize observed_events = count() by event_type = tostring(customDimensions.event_type), result = tostring(customDimensions.result), reason_code = tostring(customDimensions.reason_code)\n| order by result asc, observed_events desc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "views",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Passport views served by role group and field set - no viewer identity",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name == \"view.served\"\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend event = tostring(customDimensions.event_id)\n| where isnotempty(event)\n| summarize arg_max(timestamp, *) by name, event\n| summarize views_served = count() by role_group = tostring(customDimensions.role_group), field_set = tostring(customDimensions.field_set), bin(timestamp, 1h)\n| order by timestamp asc",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "denials",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "App-observed access denials and injection holds - reason codes, no evidence content",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and name in (\"access.denied\", \"gate.failed\")\n| where tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| extend event = tostring(customDimensions.event_id)\n| where isnotempty(event)\n| summarize arg_max(timestamp, *) by name, event\n| summarize observed_events = count() by event_type = name, route = tostring(customDimensions.route_template), role = tostring(customDimensions.actor_role), reason_code = tostring(customDimensions.reason_code)",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    },
+    {
+      "type": 3,
+      "name": "failures",
+      "content": {
+        "version": "KqlItem/1.0",
+        "title": "Outbox retries and failed ledger verification - trace IDs for investigation",
+        "query": "customEvents\n| where timestamp {TimeRange}\n| where cloud_RoleName == \"passport-app\" and tostring(customDimensions[\"dbp.schema_version\"]) == \"2\"\n| where name == \"outbox.retry\" or (name == \"ledger.verified\" and tostring(customDimensions.result) == \"failure\")\n| extend event = tostring(customDimensions.event_id)\n| where isnotempty(event)\n| summarize arg_max(timestamp, *) by name, event\n| project timestamp, event_type = name, command_id = tostring(customDimensions.command_id), reason_code = tostring(customDimensions.reason_code), attempt = tolong(customMeasurements.attempt), trace_id = operation_Id\n| order by timestamp desc\n| take 200",
+        "queryType": 0,
+        "resourceType": "microsoft.insights/components",
+        "crossComponentResources": ["__APPLICATION_INSIGHTS_ID__"],
+        "timeContextFromParameter": "TimeRange",
+        "visualization": "table"
+      }
+    }
+  ]
+}

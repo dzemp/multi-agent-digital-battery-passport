@@ -1,0 +1,133 @@
+/// The four success measures of the newest app export (data/metrics.py). Synthetic; footprint and value illustrative.
+table success_measures
+
+	measure 'Passport coverage' = DIVIDE(SUM(success_measures[published]), SUM(success_measures[produced]))
+		formatString: 0.0%
+
+	measure 'Verified footprint batteries' = SUM(success_measures[verified_footprint_batteries])
+		formatString: 0
+
+	measure 'Average footprint per kWh' = AVERAGE(success_measures[avg_kg_co2e_per_kwh])
+		formatString: 0.00
+
+	measure 'Supplier completeness' = DIVIDE(SUM(success_measures[complete_lots]), SUM(success_measures[lots]))
+		formatString: 0.0%
+
+	measure 'Second life batteries' = SUM(success_measures[second_life_count])
+		formatString: 0
+
+	measure 'Second life value EUR illustrative' = SUM(success_measures[second_life_value_eur_illustrative])
+		formatString: #,0
+
+	measure 'Published batteries (success measures)' = SUM(success_measures[published])
+		formatString: 0
+
+	measure 'Produced without passport' = SUM(success_measures[produced]) - SUM(success_measures[published])
+		formatString: 0
+
+	measure 'Batteries not in export' = SUM(success_measures[not_in_export])
+		formatString: 0
+
+	measure 'Export ID' = SELECTEDVALUE(success_measures[export_id], "not measured")
+
+	measure 'Generated UTC' = SELECTEDVALUE(success_measures[generated_utc], "not measured")
+
+	measure 'Data status' = IF(COUNTROWS(success_measures) = 0, "No export loaded, nothing measured", SELECTEDVALUE(success_measures[data_label], "unlabeled") & " data, export " & SELECTEDVALUE(success_measures[export_id], "unknown") & ", generated " & SELECTEDVALUE(success_measures[generated_utc], "unknown") & " UTC")
+
+	measure 'Coverage display' = IF(ISBLANK([Passport coverage]), "Not measured", FORMAT([Passport coverage], "0.0%"))
+
+	measure 'Footprint display' = IF(ISBLANK([Average footprint per kWh]), "Not measured", FORMAT([Average footprint per kWh], "0.00"))
+
+	measure 'Completeness display' = IF(ISBLANK([Supplier completeness]), "Not measured", FORMAT([Supplier completeness], "0.0%"))
+
+	measure 'Second life display' = IF(ISBLANK([Second life value EUR illustrative]), "Not measured", "EUR " & FORMAT([Second life value EUR illustrative], "#,0"))
+
+	measure 'Second life count display' = IF(ISBLANK([Second life batteries]), "Not measured", FORMAT([Second life batteries], "#,0"))
+
+	measure 'Published display' = IF(ISBLANK([Published batteries (success measures)]), "Not measured", FORMAT([Published batteries (success measures)], "#,0"))
+
+	measure 'Unpublished display' = IF(ISBLANK([Produced without passport]), "Not measured", FORMAT([Produced without passport], "#,0"))
+
+	measure 'Verified display' = IF(ISBLANK([Verified footprint batteries]), "Not measured", FORMAT([Verified footprint batteries], "#,0"))
+
+	column export_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: export_id
+
+	column generated_utc
+		dataType: string
+		summarizeBy: none
+		sourceColumn: generated_utc
+
+	column produced
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: produced
+
+	column published
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: published
+
+	column coverage_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: coverage_pct
+
+	column verified_footprint_batteries
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: verified_footprint_batteries
+
+	column verified_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: verified_pct
+
+	column avg_kg_co2e_per_kwh
+		dataType: double
+		summarizeBy: none
+		sourceColumn: avg_kg_co2e_per_kwh
+
+	column lots
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: lots
+
+	column complete_lots
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: complete_lots
+
+	column supplier_completeness_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: supplier_completeness_pct
+
+	column second_life_count
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: second_life_count
+
+	column second_life_value_eur_illustrative
+		dataType: double
+		summarizeBy: none
+		sourceColumn: second_life_value_eur_illustrative
+
+	column not_in_export
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: not_in_export
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	partition success_measures = entity
+		mode: directLake
+		source
+			entityName: success_measures
+			schemaName: dbo
+			expressionSource: DatabaseQuery

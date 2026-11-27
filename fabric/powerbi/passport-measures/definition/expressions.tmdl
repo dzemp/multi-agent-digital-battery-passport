@@ -1,0 +1,6 @@
+/// The SQL analytics endpoint of the reporting lakehouse; python -m dbp_mvp powerbi fills in both values.
+expression DatabaseQuery =
+		let
+		    database = Sql.Database("{{sql_endpoint_host}}", "{{sql_endpoint_id}}")
+		in
+		    database

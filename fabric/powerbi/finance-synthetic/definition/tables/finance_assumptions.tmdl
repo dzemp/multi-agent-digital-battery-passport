@@ -1,0 +1,65 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_assumptions
+
+	column assumption
+		dataType: string
+		summarizeBy: none
+		sourceColumn: assumption
+
+	column value
+		dataType: string
+		summarizeBy: none
+		sourceColumn: value
+
+	column basis
+		dataType: string
+		summarizeBy: none
+		sourceColumn: basis
+
+	column owner_role
+		dataType: string
+		summarizeBy: none
+		sourceColumn: owner_role
+
+	column status
+		dataType: string
+		summarizeBy: none
+		sourceColumn: status
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_assumptions = m
+		mode: import
+		source =
+			#table(
+				type table [assumption = text, value = text, basis = text, owner_role = text, status = text, data_label = text, model_version = text],
+				{
+					{"Contract revenue", "EUR 3.0bn / FY2027", "Fictional annual portfolio, not realized revenue", "Commercial", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Volume", "150,000 batteries / year", "A planning volume, not cells or a live forecast", "Operations", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Readiness", "80 to 96 percent by contract", "Fictional snapshot, not legal market-access approval", "Sustainability", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Delay", "15 to 45 days; 25 to 60 percent likelihood", "Cash timing exposure, not a forecast of lost sales", "Treasury", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Manual baseline", "EUR 18 / passport", "Avoided fully loaded manual process cost", "Finance", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Discount and horizon", "10 percent / 3 operating years", "Pretax, unlevered; no terminal value", "Finance", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Rollout", "55 / 85 / 100 percent", "Annual volume ramp; not a legal-readiness forecast", "Program", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Scenario volumes", "75 / 100 / 140 percent of planning volume", "Cautious / Base / Accelerated, not probabilities", "Operations", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Scenario readiness", "96 / 99 / 100 percent", "Future modeled coverage, separate from the contract snapshot", "Sustainability", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Verified revenue", "60 / 80 / 90 percent", "Modeled verified share of ready revenue, not measured claims", "Sustainability", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Premium", "0 / 5 / 10 basis points", "Only verified, ready revenue; no OEM agreement exists", "Commercial", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Second life", "1,200 / 2,400 / 4,200 returned batteries", "Yield 55 / 65 / 75 percent; not measured recovery", "Circularity", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Resale price", "EUR 600 / 700 / 800 per saleable unit", "No market price or realized sale is represented", "Circularity", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Recovery expense", "EUR 420 / 430 / 450 per return", "Charged on every return, including failed recovery", "Circularity", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Build variation", "90 / 100 / 115 percent of base build", "Scenario investment factors, not confidence intervals", "Program", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Platform and inference", "Bottom-up fictional EUR expenses", "Not Azure prices, invoices or measured token usage", "Technology", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Build budget", "EUR 1.90m", "Unapproved investment envelope, no actual spend", "Finance", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Excluded effects", "Tax, FX, financing and terminal value", "No fine forecast, CBAM tariff or carbon-credit benefit", "Finance", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Decision gate", "Validate before funding", "Confirm contracts, cost inputs, risk and benefit ownership", "CFO / CSO", "Unvalidated synthetic", "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

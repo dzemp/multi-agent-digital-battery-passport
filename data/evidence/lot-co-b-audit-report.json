@@ -1,0 +1,42 @@
+{
+  "document_type": "site_audit_report",
+  "data_label": "synthetic - fictional companies and places",
+  "audit_id": "AUD-MINE-RIDGE-2026-01",
+  "auditor": "Fabrikam Assurance (fictional auditor)",
+  "audit_window": [
+    "2026-10-20",
+    "2026-10-24"
+  ],
+  "issued_utc": "2026-10-27T09:00:00Z",
+  "subject_site": "Mine Ridge",
+  "material": "cobalt",
+  "related_supplier_id": "SUP-PROSEWARE",
+  "related_lot_ids": [
+    "LOT-CO-B"
+  ],
+  "responds_to": "ADV-MINE-RIDGE-2026-01",
+  "findings": [
+    {
+      "topic": "child_labour",
+      "result": "not_observed",
+      "summary": "No minors were found on site during the audit; age checks at the gate were incomplete."
+    },
+    {
+      "topic": "unsafe_working_conditions",
+      "result": "partly_confirmed",
+      "summary": "One shaft lacked wall supports; protective equipment was issued during the audit."
+    }
+  ],
+  "corrective_actions": [
+    {
+      "action": "Introduce documented age verification at every pit entrance.",
+      "due_date": "2027-01-31"
+    },
+    {
+      "action": "Install wall supports in the remaining shaft and re-inspect.",
+      "due_date": "2027-01-31"
+    }
+  ],
+  "conclusion": "Supply may continue under the corrective action plan; re-audit within six months.",
+  "note": "Illustrative audit for a synthetic scenario; it names no real place, company or person."
+}
