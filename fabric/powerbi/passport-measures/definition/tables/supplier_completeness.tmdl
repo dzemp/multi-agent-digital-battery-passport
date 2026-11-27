@@ -1,0 +1,52 @@
+/// Lots with every required field and a verified signed claim, per supplier and material. Synthetic.
+table supplier_completeness
+
+	measure 'Lot completeness' = DIVIDE(SUM(supplier_completeness[complete]), SUM(supplier_completeness[lots]))
+		formatString: 0.0%
+
+	column export_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: export_id
+
+	column generated_utc
+		dataType: string
+		summarizeBy: none
+		sourceColumn: generated_utc
+
+	column supplier_id
+		dataType: string
+		summarizeBy: none
+		sourceColumn: supplier_id
+
+	column material
+		dataType: string
+		summarizeBy: none
+		sourceColumn: material
+
+	column lots
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: lots
+
+	column complete
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: complete
+
+	column complete_pct
+		dataType: double
+		summarizeBy: none
+		sourceColumn: complete_pct
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	partition supplier_completeness = entity
+		mode: directLake
+		source
+			entityName: supplier_completeness
+			schemaName: dbo
+			expressionSource: DatabaseQuery

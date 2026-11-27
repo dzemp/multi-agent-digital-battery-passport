@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "description": "Synthetic battery passport MVP: the app's report export v2 in reporting -> history, current status and lot claims, and the measure tables.",
+    "parameters": {
+      "export_id": {"type": "string", "defaultValue": ""}
+    },
+    "activities": [
+      {
+        "name": "reporting_measures",
+        "type": "TridentNotebook",
+        "dependsOn": [],
+        "policy": {"timeout": "0.01:00:00", "retry": 0, "retryIntervalInSeconds": 30},
+        "typeProperties": {
+          "workspaceId": "{{workspace_id}}",
+          "notebookId": "{{notebook:reporting_measures}}",
+          "parameters": {
+            "export_id": {"value": {"value": "@pipeline().parameters.export_id", "type": "Expression"}, "type": "string"}
+          }
+        }
+      }
+    ]
+  }
+}

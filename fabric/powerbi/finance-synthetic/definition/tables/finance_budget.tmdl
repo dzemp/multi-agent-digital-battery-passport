@@ -1,0 +1,94 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_budget
+
+	measure 'Base build forecast' = CALCULATE(SUM(finance_budget[forecast_eur]), REMOVEFILTERS(finance_scenarios), finance_budget[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Base build budget' = CALCULATE(SUM(finance_budget[budget_eur]), REMOVEFILTERS(finance_scenarios), finance_budget[scenario] = "Base")
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Budget headroom' = [Base build budget] - [Base build forecast]
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Headroom display' = IF(ISBLANK([Budget headroom]), "Not measured", "EUR " & FORMAT(DIVIDE([Budget headroom], 1000000), "0.00") & "m")
+
+	column scenario
+		dataType: string
+		summarizeBy: none
+		sourceColumn: scenario
+
+	column month
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: month
+
+	column period
+		dataType: string
+		summarizeBy: none
+		sourceColumn: period
+		sortByColumn: month
+
+	column forecast_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: forecast_eur
+
+	column budget_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: budget_eur
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_budget = m
+		mode: import
+		source =
+			#table(
+				type table [scenario = text, month = Int64.Type, period = text, forecast_eur = nullable number, budget_eur = nullable number, data_label = text, model_version = text],
+				{
+					{"Cautious", 1, "M01", 64800.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 2, "M02", 97200.00, 114000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 3, "M03", 129600.00, 152000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 4, "M04", 162000.00, 190000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 5, "M05", 194400.00, 228000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 6, "M06", 226800.00, 266000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 7, "M07", 226800.00, 266000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 8, "M08", 162000.00, 190000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 9, "M09", 129600.00, 152000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 10, "M10", 97200.00, 114000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 11, "M11", 64800.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Cautious", 12, "M12", 64800.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 1, "M01", 72000.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 2, "M02", 108000.00, 114000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 3, "M03", 144000.00, 152000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 4, "M04", 180000.00, 190000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 5, "M05", 216000.00, 228000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 6, "M06", 252000.00, 266000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 7, "M07", 252000.00, 266000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 8, "M08", 180000.00, 190000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 9, "M09", 144000.00, 152000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 10, "M10", 108000.00, 114000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 11, "M11", 72000.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Base", 12, "M12", 72000.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 1, "M01", 82800.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 2, "M02", 124200.00, 114000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 3, "M03", 165600.00, 152000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 4, "M04", 207000.00, 190000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 5, "M05", 248400.00, 228000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 6, "M06", 289800.00, 266000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 7, "M07", 289800.00, 266000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 8, "M08", 207000.00, 190000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 9, "M09", 165600.00, 152000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 10, "M10", 124200.00, 114000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 11, "M11", 82800.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"Accelerated", 12, "M12", 82800.00, 76000.00, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

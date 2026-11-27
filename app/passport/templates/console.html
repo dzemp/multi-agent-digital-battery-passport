@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{# Operations console: the controls behind the executive screens. Every form posts to the JSON API
+   with return_to=/; the API redirects back here with the HTTP status and its answer in ?msg=. #}
+{% block style %}
+  .signed-in { margin:10px 0 0; font-size:14px; color:var(--muted); }
+  .signed-in strong { color:var(--ink); }
+  code.cmd { display:block; margin-top:8px; padding:10px 12px; background:var(--white); border:1px solid var(--line); border-radius:6px;
+             font-size:13px; overflow-wrap:anywhere; }
+  .section-head h2 { display:flex; align-items:center; gap:10px; margin:0; font-size:20px; }
+  .section-head h2 .icon { color:var(--blue-ink); }
+  td .status { font-size:13px; padding:2px 10px; }
+  td.num { white-space:nowrap; }
+  .hash { font-family:"Cascadia Mono", Consolas, "Courier New", monospace; font-size:13px; color:var(--muted); }
+  .empty { padding:18px 24px; margin:0; color:var(--muted); }
+  form.op { display:flex; flex-direction:column; gap:14px; height:100%; }
+  form.op h3 { display:flex; align-items:center; gap:10px; margin:0; font-size:17px; }
+  .step { display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:50%; flex:none;
+          background:var(--blue-tint); color:var(--blue-ink); border:1px solid #C7DCF2; font-size:14px; font-weight:600; }
+  form.op label { display:block; font-weight:600; font-size:14px; }
+  form.op label span { font-weight:400; color:var(--muted); }
+  form.op input[type=text], form.op select, form.op input[type=file] {
+    display:block; width:100%; margin-top:6px; font:inherit; font-size:15px; padding:8px 10px; border:1.5px solid var(--line-strong);
+    border-radius:6px; background:var(--white); color:var(--ink); }
+  form.op input[type=file] { padding:6px 8px; font-size:14px; }
+  form.op .btn { align-self:flex-start; margin-top:auto; }
+  .worker { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; margin:0 0 14px; }
+  .worker .error { flex-basis:100%; margin:0; color:var(--red-ink); font-size:14px; overflow-wrap:anywhere; }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ "Tools" if view.staff else "Battery Passport" }}</p>
+    <h1>{{ title }}</h1>
+    <p class="subtitle">{% if view.staff %}Evidence, sourcing reviews, the snapshot queue and the audit log behind the passport screens.{% else %}Published passports and their public record.{% endif %}</p>
+    {% if person %}<p class="signed-in">Signed in as <strong>{{ person.name }}</strong> · {{ person.roles|sort|join(", ") if person.roles else "no app role" }}</p>{% endif %}
+  </div>
+  <span class="status big tone-{{ view.board.tone }}">{{ view.board.text }}</span>
+</div>
+{% if person and "Passport.PolicyApprover" in person.roles %}
+<p><a class="btn btn-secondary btn-sm" href="/policy">Review Watch policy recommendations</a></p>
+{% endif %}
+
+{% if view.result %}
+<div class="panel {{ 'p-good' if view.result.ok else 'p-bad' }} notice" role="{{ 'status' if view.result.ok else 'alert' }}">
+  <p class="panel-title">{{ brand.icon("shield" if view.result.ok else "hold", 20) }} {{ "Done" if view.result.ok else "Not done" }}{% if view.result.code %} (HTTP {{ view.result.code }}){% endif %}</p>
+  {% if view.result.summary %}<p style="margin:0">{{ view.result.summary }}</p>{% endif %}
+  <code class="cmd">{{ view.result.detail }}</code>
+</div>
+{% endif %}
+
+{% if not person %}
+<div class="panel p-info notice">
+  <p class="panel-title">{{ brand.icon("person", 20) }} Staff sign-in</p>
+  <p style="margin:0 0 {{ '12px' if login else '0' }}">Sign in to see sourcing reviews, evidence, the snapshot queue and the audit log.{% if not login %} Local mode: send the <code>x-local-user</code> and <code>x-local-roles</code> headers.{% endif %}</p>
+  {% if login %}<a class="btn btn-primary btn-sm" href="{{ login }}">Sign in</a>{% endif %}
+</div>
+{% elif not person.roles %}
+<div class="panel p-warn notice" role="status">
+  <p class="panel-title">{{ brand.icon("person", 20) }} {{ "Public reader view" if persona.choice == "public" else "No app role yet" }}</p>
+  <p style="margin:0">{{ "Only public fields are shown. Use View as to return to an assigned role." if persona.choice == "public" else "You are signed in but have no app role. Ask an admin to assign Passport.Operator or Passport.Reviewer." }}</p>
+</div>
+{% elif admin_only %}
+<div class="panel p-info notice" role="status">
+  <p class="panel-title">{{ brand.icon("settings", 20) }} Administrator</p>
+  <p style="margin:0">Your role covers the app <a href="/settings">Settings</a>. Reviews, evidence and the snapshot queue need Passport.Operator or Passport.Reviewer.</p>
+</div>
+{% endif %}
+
+<section class="{{ 'section' if view.staff else '' }}" aria-labelledby="passports">
+  <div class="section-head"><h2 id="passports">{{ brand.icon("passport", 22) }} Passports</h2><p>{{ view.passports|length }} batter{{ 'y' if view.passports|length == 1 else 'ies' }}</p></div>
+  <div class="card table-card">
+  {% if view.passports %}
+    <table>
+      <thead><tr><th scope="col">Battery</th><th scope="col">Model</th><th scope="col">Status</th><th scope="col">Version</th><th scope="col">Published</th><th scope="col">Stored copy</th><th scope="col">Snapshot hash</th></tr></thead>
+      <tbody>
+      {% for p in view.passports %}
+        <tr>
+          <th scope="row"><a href="{{ p.url }}">{{ p.battery_id }}</a></th>
+          <td>{{ p.model_id }}</td>
+          <td><span class="status tone-{{ p.status.tone }}">{{ p.status.text }}</span></td>
+          <td class="num">{{ p.version if p.version else "–" }}</td>
+          <td class="num">{{ p.published_when or "–" }}</td>
+          <td>{% if p.copy %}<span class="status tone-{{ p.copy.tone }}">{{ p.copy.text }}</span>{% else %}–{% endif %}</td>
+          <td>{% if p.sha256 %}<span class="hash" title="{{ p.sha256 }}">{{ p.sha256[:12] }}</span>{% else %}–{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No battery has been imported yet.</p>
+  {% endif %}
+  </div>
+</section>
+
+{% if view.staff %}
+<section class="section" aria-labelledby="reviews">
+  <div class="section-head"><h2 id="reviews">{{ brand.icon("hold", 22) }} Sourcing reviews</h2><p>Open a review to see the side-by-side comparison.</p></div>
+  <div class="card table-card">
+  {% if view.reviews %}
+    <table>
+      <thead><tr><th scope="col">Review</th><th scope="col">Lot</th><th scope="col">Status</th><th scope="col">Row version</th><th scope="col">Opening evidence</th><th scope="col">Resolution evidence</th><th scope="col">Reason</th></tr></thead>
+      <tbody>
+      {% for r in view.reviews %}
+        <tr>
+          <th scope="row"><a href="{{ r.url }}">{{ r.review_id }}</a></th>
+          <td>{{ r.lot_id }}</td>
+          <td><span class="status tone-{{ r.status.tone }}">{{ r.status.text }}</span></td>
+          <td class="num">{{ r.row_version }}</td>
+          <td class="mono">{{ r.opening|join(", ") or "–" }}</td>
+          <td class="mono">{{ r.resolution|join(", ") or "–" }}</td>
+          <td{% if r.reason_ai %} data-ai-generated="true" data-provenance-id="{{ r.provenance_id }}"{% endif %}>{% if r.reason_ai %}<span class="pill ai">AI-generated</span> {% endif %}{{ r.reason or "–" }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No sourcing review has been opened.</p>
+  {% endif %}
+  </div>
+</section>
+
+<section class="section" aria-labelledby="evidence">
+  <div class="section-head"><h2 id="evidence">{{ brand.icon("evidence", 22) }} Evidence</h2><p>Files are kept in Blob Storage; the ledger keeps their hash.</p></div>
+  <div class="card table-card">
+  {% if view.evidence %}
+    <table>
+      <thead><tr><th scope="col">Evidence</th><th scope="col">Lot</th><th scope="col">Kind</th><th scope="col">File</th><th scope="col">SHA-256</th><th scope="col">Uploaded by</th><th scope="col">Uploaded</th></tr></thead>
+      <tbody>
+      {% for e in view.evidence %}
+        <tr>
+          <th scope="row" class="mono">{{ e.evidence_id }}</th>
+          <td>{{ e.lot_id }}</td>
+          <td>{{ e.kind|replace("_", " ") }}</td>
+          <td>{{ e.file_name }}</td>
+          <td>{% if e.sha256 %}<span class="hash" title="{{ e.sha256 }}">{{ e.sha256[:12] }}</span>{% else %}–{% endif %}</td>
+          <td>{{ e.uploaded_by }}</td>
+          <td class="num">{{ e.uploaded_when }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No evidence has been uploaded.</p>
+  {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if view.reviewer %}
+<section class="section" aria-labelledby="record">
+  <div class="section-head"><h2 id="record">{{ brand.icon("person", 22) }} Record evidence and decisions</h2><p>Each form is used once; the page reloads with the result.</p></div>
+  <datalist id="evidence-lots">{% for lot in view.lot_ids %}<option value="{{ lot }}">{% endfor %}</datalist>
+  <div class="grid-3">
+    <div class="card card-body">
+      <form class="op" method="post" action="/evidence" enctype="multipart/form-data">
+        <h3><span class="step" aria-hidden="true">1</span> Upload evidence</h3>
+        <label>Kind <select name="kind">{% for k in view.evidence_kinds %}<option>{{ k }}</option>{% endfor %}</select></label>
+        <label>Lot <input type="text" name="lot_id" list="evidence-lots" required></label>
+        <label>File <input type="file" name="file" required></label>
+        <input type="hidden" name="command_id" value="{{ command_ids[0] }}"><input type="hidden" name="return_to" value="/">
+        <button class="btn btn-primary btn-sm" type="submit">Upload</button>
+      </form>
+    </div>
+    <div class="card card-body">
+      <form class="op" method="post" action="/reviews">
+        <h3><span class="step" aria-hidden="true">2</span> Open a sourcing review</h3>
+        <label>Lot <input type="text" name="lot_id" list="evidence-lots" required></label>
+        <label>Reason <input type="text" name="reason"></label>
+        <label>Evidence IDs <span>(comma separated)</span> <input type="text" name="evidence_ids"></label>
+        <input type="hidden" name="command_id" value="{{ command_ids[1] }}"><input type="hidden" name="return_to" value="/">
+        <button class="btn btn-primary btn-sm" type="submit">Open</button>
+      </form>
+    </div>
+    <div class="card card-body">
+      <form class="op" method="post" action="/reviews/resolve">
+        <h3><span class="step" aria-hidden="true">3</span> Resolve a review</h3>
+        <label>Review ID <input type="text" name="review_id"></label>
+        <label>Row version you read <input type="text" name="expected_row_version" inputmode="numeric"></label>
+        <label>Reason <input type="text" name="reason"></label>
+        <label>Evidence IDs <span>(comma separated)</span> <input type="text" name="evidence_ids"></label>
+        <input type="hidden" name="command_id" value="{{ command_ids[2] }}"><input type="hidden" name="return_to" value="/">
+        <button class="btn btn-primary btn-sm" type="submit">Resolve</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if view.operator %}
+<section class="section" aria-labelledby="queue">
+  <div class="section-head"><h2 id="queue">{{ brand.icon("database", 22) }} Snapshot queue (outbox)</h2><p>The worker writes each published passport copy to Blob Storage.</p></div>
+  <div class="worker">
+    <span class="muted small">Worker</span><span class="status tone-{{ view.worker.state.tone }}">{{ view.worker.state.text }}</span>
+    {% if view.worker.last_error %}<p class="error">Last error: {{ view.worker.last_error }}</p>{% endif %}
+  </div>
+  <div class="grid-2">
+    <div class="card table-card">
+    {% if view.outbox %}
+      <table>
+        <thead><tr><th scope="col">Item</th><th scope="col">Passport</th><th scope="col">Status</th><th scope="col">Attempts</th><th scope="col">Last error</th></tr></thead>
+        <tbody>
+        {% for o in view.outbox %}
+          <tr>
+            <th scope="row" class="num">{{ o.outbox_id }}</th>
+            <td>{{ o.subject }}</td>
+            <td><span class="status tone-{{ o.status.tone }}">{{ o.status.text }}</span></td>
+            <td class="num">{{ o.attempts }}</td>
+            <td>{{ o.last_error or "–" }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">The queue is empty.</p>
+    {% endif %}
+    </div>
+    <div class="card card-body">
+      <form class="op" method="post" action="/packages/import">
+        <h3>{{ brand.icon("arrow", 20) }} Import a gold package from Blob intake</h3>
+        <label>Intake folder <input type="text" name="intake_folder"></label>
+        <input type="hidden" name="command_id" value="{{ command_ids[3] }}"><input type="hidden" name="return_to" value="/">
+        <button class="btn btn-primary btn-sm" type="submit">Import</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if view.connector %}
+<section class="section" aria-labelledby="connector">
+  <div class="section-head"><h2 id="connector">{{ brand.icon("arrow", 22) }} Connector (mock)</h2><p>A mock exchange, not a data-space connector: trust comes from each party's signature in the registry. {{ view.connector.agreements }} agreement{{ '' if view.connector.agreements == 1 else 's' }} recorded.</p></div>
+  <div class="grid-2">
+    <div class="card table-card">
+    {% if view.connector.parties %}
+      <table>
+        <caption class="muted small">Party registry (public keys only)</caption>
+        <thead><tr><th scope="col">Party</th><th scope="col">Role</th><th scope="col">Key</th><th scope="col">May send</th><th scope="col">Status</th></tr></thead>
+        <tbody>
+        {% for p in view.connector.parties %}
+          <tr>
+            <th scope="row" title="{{ p.name }}">{{ p.party_id }}</th>
+            <td>{{ p.role }}</td>
+            <td><span class="hash" title="{{ p.key_id }}">{{ p.key }}</span></td>
+            <td class="small">{{ p.scope }}</td>
+            <td><span class="status tone-{{ p.status.tone }}">{{ p.status.text }}</span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No party registry is configured (DBP_PARTY_REGISTRY_B64).</p>
+    {% endif %}
+    </div>
+    <div class="card table-card">
+    {% if view.connector.messages %}
+      <table>
+        <caption class="muted small">Latest connector messages (mock)</caption>
+        <thead><tr><th scope="col">Received</th><th scope="col">Message</th><th scope="col">Sender</th><th scope="col">Type</th><th scope="col">Subject</th><th scope="col">Result</th></tr></thead>
+        <tbody>
+        {% for m in view.connector.messages %}
+          <tr>
+            <td class="num">{{ m.when }}</td>
+            <th scope="row" class="mono">{{ m.message_id }}</th>
+            <td>{{ m.sender }}</td>
+            <td>{{ m.type }}</td>
+            <td class="mono">{{ m.subject }}</td>
+            <td><span class="status tone-{{ m.status.tone }}" title="{{ m.reason_code }}">{{ m.status.text }}</span>{% if m.reason_code not in ("ok", None) %} <span class="small mono">{{ m.reason_code }}</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="empty">No connector message has arrived.</p>
+    {% endif %}
+    </div>
+  </div>
+  <div class="card table-card" style="margin-top:16px">
+  {% if view.connector.quarantined %}
+    <table>
+      <caption class="muted small">Quarantined lifecycle events - checked by the lifecycle state machine and never applied</caption>
+      <thead><tr><th scope="col">Recorded</th><th scope="col">Event</th><th scope="col">Battery</th><th scope="col">Type</th><th scope="col">Issuer</th><th scope="col">Passport state</th><th scope="col">Reason</th></tr></thead>
+      <tbody>
+      {% for q in view.connector.quarantined %}
+        <tr>
+          <td class="num">{{ q.when }}</td>
+          <th scope="row" class="mono">{{ q.event_id }}</th>
+          <td class="mono"><a href="/p/{{ q.battery_id }}">{{ q.battery_id }}</a></td>
+          <td>{{ q.event_type }}</td>
+          <td>{{ q.issuer }}</td>
+          <td>{{ q.state }}</td>
+          <td><span class="status tone-warn">Quarantined</span> <span class="small mono">{{ q.reason_code }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No lifecycle event has been quarantined.</p>
+  {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% if view.staff %}
+<section class="section" aria-labelledby="audit">
+  <div class="section-head"><h2 id="audit">{{ brand.icon("trail", 22) }} Latest audit events</h2><p>Newest first, last 15.</p></div>
+  <div class="card table-card">
+  {% if view.audit %}
+    <table>
+      <thead><tr><th scope="col">When</th><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Subject</th></tr></thead>
+      <tbody>
+      {% for a in view.audit %}
+        <tr><td class="num">{{ a.when }}</td><td>{{ a.actor }}</td><td>{{ a.action }}</td><td class="mono">{{ a.subject }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">No audit events yet.</p>
+  {% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

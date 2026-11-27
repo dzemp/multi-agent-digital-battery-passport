@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% block style %}
+  .affected { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; font-size:14px; }
+  .docs { list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:12px; }
+  .docs li { display:flex; align-items:center; gap:10px; background:var(--white); border:1px solid var(--line); border-radius:8px;
+             padding:10px 14px; font-size:14px; box-shadow:var(--shadow); }
+  .docs .icon { color:var(--blue-ink); }
+  .docs .tag { color:var(--blue-ink); background:var(--blue-tint); border-color:#B4D6FA; }
+  .docs .tag.used { color:var(--green-ink); background:var(--green-tint); border-color:#9FD89F; }
+  .labels { display:flex; gap:6px; flex-wrap:wrap; }
+  fieldset { border:0; padding:0; margin:0 0 18px; }
+  legend { font-weight:600; margin-bottom:6px; }
+  .choice { display:flex; gap:12px; align-items:center; background:var(--white); border:1.5px solid var(--line-strong); border-radius:8px;
+            padding:12px 16px; margin:8px 0; cursor:pointer; }
+  .choice input { width:18px; height:18px; accent-color:var(--teal); }
+  label.field { display:block; font-weight:600; margin:12px 0 6px; }
+  label.field span { font-weight:400; color:var(--muted); }
+  textarea, input.text { width:100%; font:inherit; padding:10px 12px; border:1.5px solid var(--line-strong); border-radius:6px; background:var(--white); }
+  .form-actions { display:flex; align-items:center; gap:18px; margin-top:16px; }
+  .form-actions p { margin:0; font-size:14px; color:var(--muted); max-width:520px; }
+  .decisions { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Compliance case {{ view.case_id }} · supplier lot {{ view.lot_id }}</p>
+    <h1>Supplier lot {{ view.lot_id }}: {{ 'due diligence decision needed' if view.open else 'accepted with an action plan' }}</h1>
+    <p class="subtitle">{{ view.opened_reason }} · opened by the {{ view.opened_by }} on {{ view.opened_when }}{% if view.reopen_count %}; reopened {{ view.reopen_count }} time{{ 's' if view.reopen_count != 1 }}, last on {{ view.reopened_when }}{% endif %}.</p>
+    <p class="labels">{% for label in view.labels %}<span class="pill">{{ label }}</span>{% endfor %}</p>
+  </div>
+  <span class="status big tone-{{ view.tone }}">{{ view.state }}</span>
+</div>
+
+{% if done %}
+<div class="panel p-good notice" role="status">
+  <p class="panel-title">{{ brand.icon("shield", 20) }} Decision recorded.</p>
+  <p style="margin:0">The application re-ran its checks. The agents now reassess the affected batteries and publish only if
+    every gate passes - you did not publish anything.</p>
+  <p class="notice-actions"><a class="btn btn-primary btn-sm" href="/exec">Back to passport readiness</a>
+    <a class="btn btn-secondary btn-sm" href="/cases">Back to compliance cases</a></p>
+</div>
+{% endif %}
+
+<section class="panel p-amber" aria-labelledby="why">
+  <span class="pill corner{% if view.proposal and view.proposal.reason_ai %} ai{% endif %}">{{ ('AI-generated proposal' if view.proposal.reason_ai else 'Scripted proposal (not AI)') if view.proposal else 'Opened by a person' }}</span>
+  <h2 class="panel-title" id="why">{{ brand.icon("hold", 20) }} Why the lot is under review</h2>
+  {% if view.proposal %}
+  <p style="font-size:17px; margin:0"{% if view.proposal.reason_ai %} data-ai-generated="true" data-provenance-id="{{ view.proposal.provenance_id }}"{% endif %}>Supplier agent proposed <strong>{{ view.proposal.action }}</strong>: {{ view.proposal.reason }}</p>
+  {% else %}
+  <p style="font-size:17px; margin:0">{{ view.opened_reason }}.</p>
+  {% endif %}
+  <div class="affected"><span class="muted">Batteries using this lot:</span>
+  {% for battery in view.batteries %}<strong>{{ battery.battery_id }}</strong> <span class="status tone-{{ battery.status.tone }}">{{ battery.status.text }}</span>{% endfor %}
+  </div>
+</section>
+
+<section class="section" aria-labelledby="docs">
+  <div class="section-head"><h2 id="docs">Evidence on file</h2><p>Synthetic, illustrative records.</p></div>
+  {% if upload_result %}
+  <div class="panel {{ 'p-good' if upload_result.ok else 'p-bad' }} notice" role="{{ 'status' if upload_result.ok else 'alert' }}">
+    <p class="panel-title">{{ "Evidence request accepted" if upload_result.ok else "Evidence not uploaded" }} (HTTP {{ upload_result.code }})</p>
+    <p>{{ upload_result.summary }}</p>
+  </div>
+  {% endif %}
+  <ul class="docs">
+  {% for doc in view.documents %}
+    <li>{{ brand.icon("evidence", 20) }}<span><strong>{{ doc.file_name }}</strong><br><span class="muted">{{ doc.kind }} · {{ doc.uploaded }}</span></span>
+      {% if doc.opening %}<span class="tag">when the case opened</span>{% endif %}{% if doc.used %}<span class="tag used">cited in a decision</span>{% endif %}
+      {% if person.has_any(["Passport.Compliance", "Passport.Reviewer"]) %}<a href="/evidence/{{ doc.evidence_id }}/content" target="_blank" rel="noopener noreferrer">Read document <span class="visually-hidden">(opens in a new tab)</span></a>{% endif %}</li>
+  {% endfor %}
+  </ul>
+  {% if view.open and view.can_decide %}
+  <details class="card card-body" style="margin-top:16px">
+    <summary>Add the independent audit report</summary>
+    <p class="small" style="margin-top:12px">Upload the synthetic audit JSON generated with this series. It becomes evidence to read and cite, not an automatic decision.</p>
+    <form method="post" action="/evidence" enctype="multipart/form-data">
+      <input type="hidden" name="kind" value="audit_report">
+      <input type="hidden" name="lot_id" value="{{ view.lot_id }}">
+      <input type="hidden" name="command_id" value="{{ upload_command_id }}">
+      <input type="hidden" name="return_to" value="/cases/{{ view.case_id }}">
+      <label class="field" for="audit-file">Audit report (JSON, at most 16 KB)</label>
+      <input type="file" id="audit-file" name="file" accept=".json,application/json" required>
+      <button class="btn btn-secondary btn-sm" type="submit">Upload audit report</button>
+    </form>
+  </details>
+  {% endif %}
+</section>
+
+<section class="section" aria-labelledby="history">
+  <div class="section-head"><h2 id="history">Decisions</h2></div>
+{% if view.decisions %}
+  <ul class="decisions">
+  {% for d in view.decisions %}
+    <li class="panel p-teal">
+      <span class="pill corner">Human decision</span>
+      <p class="panel-title">{{ brand.icon("person", 20) }} {{ d.by }} · {{ d.when }} · <span class="status tone-{{ d.tone }}">{{ d.decision }}</span></p>
+      <dl class="facts">
+        <dt>Reason</dt><dd style="font-weight:400">{{ d.reason }}</dd>
+        {% if d.owner %}<dt>Action-plan owner</dt><dd>{{ d.owner }}</dd><dt>Due date</dt><dd>{{ d.due_date }}</dd>{% endif %}
+        {% if d.evidence %}<dt>Evidence cited</dt><dd>{{ d.evidence|join(", ") }}</dd>{% endif %}
+      </dl>
+    </li>
+  {% endfor %}
+  </ul>
+{% else %}
+  <p class="muted">No decision yet.</p>
+{% endif %}
+</section>
+
+<section class="section" aria-labelledby="decision">
+{% if view.open and view.can_decide %}
+  <div class="section-head"><h2 id="decision">Your decision</h2></div>
+  {% if error %}<div class="panel p-bad notice" role="alert"><p style="margin:0"><strong>Not recorded.</strong> {{ error }}</p></div>{% endif %}
+  <form method="post" action="/cases/{{ view.case_id }}/decide" class="panel p-teal">
+    <span class="pill corner">Human decision</span>
+    <fieldset>
+      <legend>Decision</legend>
+      <label class="choice"><input type="radio" name="decision" value="keep_hold" required {% if form.decision != "accept_with_action_plan" %}checked{% endif %}><span><strong>Keep the hold</strong></span></label>
+      <label class="choice"><input type="radio" name="decision" value="accept_with_action_plan" {% if form.decision == "accept_with_action_plan" %}checked{% endif %}><span><strong>Accept with an action plan</strong> <span class="muted">(needs an owner, a due date and new evidence)</span></span></label>
+    </fieldset>
+    {% if view.candidates %}
+    <fieldset>
+      <legend>Evidence received after the case opened</legend>
+      {% for doc in view.candidates %}
+      <label class="choice"><input type="checkbox" name="evidence_id" value="{{ doc.evidence_id }}"><span><strong>{{ doc.file_name }}</strong> <span class="muted">({{ doc.kind }}, {{ doc.uploaded }})</span></span></label>
+      {% endfor %}
+    </fieldset>
+    {% endif %}
+    <label class="field" for="owner">Action-plan owner <span>(2 to 100 characters)</span></label>
+    <input class="text" id="owner" name="owner" maxlength="100" value="{{ form.owner or '' }}">
+    <label class="field" for="due_date">Due date <span>(YYYY-MM-DD)</span></label>
+    <input class="text" id="due_date" name="due_date" type="date" value="{{ form.due_date or '' }}">
+    <label class="field" for="reason">Reason <span>(5 to 400 characters, kept in the audit trail)</span></label>
+    <textarea id="reason" name="reason" rows="3" minlength="5" maxlength="400" required>{{ form.reason or '' }}</textarea>
+    <input type="hidden" name="command_id" value="{{ command_id }}">
+    <input type="hidden" name="expected_row_version" value="{{ view.row_version }}">
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Record decision</button>
+      <p>You do not publish. Accepting re-runs the checks; the Issuance agent publishes only if every gate passes.</p>
+    </div>
+  </form>
+{% elif view.open %}
+  <div class="section-head"><h2 id="decision">Decision</h2></div>
+  <div class="panel p-info" role="status"><p style="margin:0">You can view this case. Only Passport.Compliance can record the decision.</p></div>
+{% else %}
+  <div class="section-head"><h2 id="decision">Action plan</h2></div>
+  <div class="panel p-teal"><p style="margin:0">Owner <strong>{{ view.owner }}</strong>, due {{ view.due_date }}. A new adverse report for this lot reopens the case.</p></div>
+{% endif %}
+</section>
+{% endblock %}

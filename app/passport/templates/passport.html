@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% block style %}
+  .passport-layout { display:grid; grid-template-columns:minmax(0, 1fr) 380px; gap:28px; align-items:start; }
+  .tiles { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:14px; margin:14px 0 18px; }
+  .tile { background:var(--white); border:1px solid var(--line); border-radius:6px; padding:14px 18px; }
+  .tile .k { margin:0; font-size:13.5px; color:var(--muted); }
+  .tile .v { margin:2px 0 0; font-size:19px; font-weight:600; overflow-wrap:anywhere; }
+  .panel p.lead { font-size:16px; margin:0; }
+  .audit { margin-top:20px; }
+  .audit summary { cursor:pointer; padding:16px 24px; font-weight:600; display:flex; align-items:center; gap:10px; }
+  .audit .card-body { padding-top:0; }
+  .audit code { display:block; overflow-wrap:anywhere; background:var(--neutral-tint); border-radius:6px; padding:10px 12px; }
+  .qr-card { text-align:center; }
+  .qr-card h2 { font-size:17px; }
+  .qr-card svg.qr { display:block; width:220px; height:auto; margin:16px auto; }
+  .link-label { margin:4px 0 6px; font-size:13px; font-weight:600; color:var(--muted); text-align:left; }
+  .url-box { display:block; font-family:"Cascadia Mono", Consolas, "Courier New", monospace; font-size:14px; text-align:left;
+             background:var(--blue-tint); border:1.5px dashed var(--blue); border-radius:6px; padding:10px 12px;
+             user-select:all; -webkit-user-select:all; overflow-wrap:anywhere; cursor:text; }
+  .qr-card .hint { font-size:13px; color:var(--muted); margin:8px 0 16px; text-align:left; }
+  .staff-link { margin-top:20px; }
+  @media (max-width:980px) { .passport-layout { grid-template-columns:1fr; } }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Digital battery passport</p>
+    <h1>Battery {{ view.battery_id }}</h1>
+    <p class="subtitle">Model {{ view.model_id }} · Contoso Battery AB (publ)</p>
+  </div>
+  <span class="status big tone-{{ view.status.tone }}">{{ view.status.text }}</span>
+</div>
+
+<div class="passport-layout">
+  <div>
+  {% if view.issued %}
+    <section class="panel p-teal" aria-label="Passport facts">
+      <span class="pill corner">Public information</span>
+      <h2 class="panel-title">{{ brand.icon("shield", 22) }} Passport issued</h2>
+      <div class="tiles">
+        <div class="tile"><p class="k">Battery model</p><p class="v">{{ view.model_id }}</p></div>
+        <div class="tile"><p class="k">Passport version</p><p class="v">{{ view.version }}</p></div>
+        <div class="tile"><p class="k">Published</p><p class="v">{{ view.published_when }}</p></div>
+        <div class="tile"><p class="k">Stored copy</p><p class="v">{{ view.stored_copy }}</p></div>
+      </div>
+      {% if view.facts %}
+      <div class="tiles">
+      {% for k, v in view.facts %}<div class="tile"><p class="k">{{ k }}</p><p class="v">{{ v }}</p></div>{% endfor %}
+      </div>
+      {% endif %}
+      <span class="status tone-{{ view.ledger.tone }}">{{ view.ledger.text }}</span>
+    {% if view.lifecycle and (view.lifecycle.closed or view.lifecycle.links) %}
+      <p class="lead" style="margin-top:14px">{% if view.lifecycle.closed %}Lifecycle: <strong>{{ view.lifecycle.status }}</strong>. This passport no longer changes.{% endif %}
+      {% for link in view.lifecycle.links %} {{ link.text }}: <a href="{{ link.url }}">{{ link.battery_id }}</a>.{% endfor %}</p>
+    {% endif %}
+    </section>
+    <details class="card audit">
+      <summary>{{ brand.icon("evidence", 20) }} Evidence for auditors</summary>
+      <div class="card-body">
+        <p class="small">Fingerprint (SHA-256) of the published passport copy, recorded in the tamper-evident ledger:</p>
+        <code>{{ view.snapshot_sha256 or "not recorded yet" }}</code>
+      </div>
+    </details>
+  {% else %}
+    <section class="panel p-amber" aria-label="Passport status">
+      <span class="pill corner">Public information</span>
+      <h2 class="panel-title">{{ brand.icon("hold", 22) }} Passport not yet issued</h2>
+      <div class="tiles">
+        <div class="tile"><p class="k">Battery model</p><p class="v">{{ view.model_id }}</p></div>
+        <div class="tile"><p class="k">Passport</p><p class="v">Not yet issued</p></div>
+      </div>
+      <p class="lead">This page will show the passport once it is issued.</p>
+    </section>
+  {% endif %}
+  {% if policy.oem_data_status == 'unavailable' %}
+    <p>Aftersales data is unavailable for this sign-in and pack. Exposure is unknown.</p>
+  {% endif %}
+  {% for s in sections %}
+    <section class="panel p-info" aria-labelledby="sec-{{ s.key }}" style="margin-top:20px">
+      <span class="pill corner">Your role's view</span>
+      <h2 class="panel-title" id="sec-{{ s.key }}">{{ brand.icon("shield", 22) }} {{ s.title }}</h2>
+      {% if s.facts %}
+      <div class="tiles">
+      {% for k, v in s.facts %}<div class="tile"><p class="k">{{ k }}</p><p class="v">{{ v }}</p></div>{% endfor %}
+      </div>
+      {% endif %}
+      {% for t in s.tables %}
+      <table>
+        <caption class="muted small">{{ t.caption }}</caption>
+        <thead><tr>{% for h in t.head %}<th scope="col">{{ h }}</th>{% endfor %}</tr></thead>
+        <tbody>
+        {% for row in t.rows %}<tr>{% for c in row %}<td>{{ c }}</td>{% endfor %}</tr>{% endfor %}
+        </tbody>
+      </table>
+      {% endfor %}
+    </section>
+  {% endfor %}
+  {% if policy and policy.field_groups|length > 2 %}
+    <p class="small muted">Field groups shown for your role: {{ policy.field_groups|join(", ") }}. Synthetic data; footprints and values are illustrative.</p>
+  {% endif %}
+  {% if is_staff %}
+    <p class="staff-link no-print"><a class="btn btn-secondary" href="/trail/{{ view.battery_id }}">{{ brand.icon("trail", 18) }} Decision trail and integrity (staff)</a></p>
+  {% endif %}
+  </div>
+
+  <aside class="card qr-card" aria-label="QR code and passport link">
+    <div class="card-body">
+      <h2>Scan or open this passport</h2>
+      {{ qr }}
+      <p class="link-label">Passport link</p>
+      <div class="url-box" tabindex="0">{{ url }}</div>
+      <p class="hint">Click the link once to select all of it, then copy it into any browser.</p>
+      <a class="btn btn-secondary no-print" href="/p/{{ view.battery_id }}/card">{{ brand.icon("print", 18) }} Printable card</a>
+    </div>
+  </aside>
+</div>
+{% endblock %}

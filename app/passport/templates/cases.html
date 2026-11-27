@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Due diligence on critical-material lots</p>
+    <h1>Compliance cases</h1>
+    <p class="subtitle">An open case holds every battery that uses the lot. Only Compliance decides; agents can escalate but never clear a case.</p>
+  </div>
+  <span class="status big tone-info">{{ labels|join(" · ") }}</span>
+</div>
+
+<section class="section" aria-labelledby="list">
+  <div class="section-head"><h2 id="list">Cases</h2></div>
+{% if rows %}
+  <div class="card table-card">
+  <table>
+    <thead><tr><th scope="col">Case</th><th scope="col">Supplier lot</th><th scope="col">State</th>
+      <th scope="col">Opened</th><th scope="col">Opened by</th><th scope="col">Age</th></tr></thead>
+    <tbody>
+    {% for row in rows %}
+      <tr><th scope="row"><a href="{{ row.url }}">{{ row.case_id }}</a></th><td>{{ row.lot_id }}</td>
+        <td><span class="status tone-{{ row.tone }}">{{ row.state }}</span></td><td>{{ row.opened_when }}</td>
+        <td>{{ row.opened_by }}</td><td>{{ row.age }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No compliance case has been opened.</p></div>
+{% endif %}
+</section>
+{% endblock %}

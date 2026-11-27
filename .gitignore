@@ -1,0 +1,14 @@
+# Local settings and generated files. Never commit them.
+config/mvp.toml
+config/prices.json
+output/
+.azure/
+.venv/
+__pycache__/
+*.pyc
+.pbi/
+.ruff_cache/
+.pytest_cache/
+*.pem
+*.pfx
+.env

@@ -1,0 +1,128 @@
+/// Entirely synthetic. SYN-FIN-2026-11. No external data source or approved financial input.
+table finance_contracts
+
+	measure 'Contracted revenue' = SUM(finance_contracts[contracted_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Ready contract revenue' = SUM(finance_contracts[ready_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Exposed contract revenue' = SUM(finance_contracts[exposed_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Weighted liquidity exposure' = SUM(finance_contracts[weighted_working_capital_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Exposed contribution' = SUM(finance_contracts[margin_exposed_eur])
+		formatString: "EUR "#,0;("EUR "#,0);"EUR "0
+
+	measure 'Assumed delay days' = MAX(finance_contracts[delay_days])
+		formatString: 0
+
+	measure 'Portfolio display' = IF(ISBLANK([Contracted revenue]), "Not measured", "EUR " & FORMAT(DIVIDE([Contracted revenue], 1000000000), "0.00") & "bn")
+
+	measure 'Exposure display' = IF(ISBLANK([Exposed contract revenue]), "Not measured", "EUR " & FORMAT(DIVIDE([Exposed contract revenue], 1000000), "0.00") & "m")
+
+	measure 'Liquidity display' = IF(ISBLANK([Weighted liquidity exposure]), "Not measured", "EUR " & FORMAT(DIVIDE([Weighted liquidity exposure], 1000000), "0.00") & "m")
+
+	measure 'Margin exposure display' = IF(ISBLANK([Exposed contribution]), "Not measured", "EUR " & FORMAT(DIVIDE([Exposed contribution], 1000000), "0.00") & "m")
+
+	column contract
+		dataType: string
+		summarizeBy: none
+		sourceColumn: contract
+
+	column plant
+		dataType: string
+		summarizeBy: none
+		sourceColumn: plant
+
+	column country
+		dataType: string
+		summarizeBy: none
+		sourceColumn: country
+
+	column customer
+		dataType: string
+		summarizeBy: none
+		sourceColumn: customer
+
+	column contracted_eur
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: contracted_eur
+
+	column planned_batteries
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: planned_batteries
+
+	column ready_share
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ready_share
+
+	column ready_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: ready_eur
+
+	column exposed_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: exposed_eur
+
+	column delay_days
+		dataType: int64
+		summarizeBy: none
+		sourceColumn: delay_days
+
+	column delay_probability
+		dataType: double
+		summarizeBy: none
+		sourceColumn: delay_probability
+
+	column margin_share
+		dataType: double
+		summarizeBy: none
+		sourceColumn: margin_share
+
+	column margin_exposed_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: margin_exposed_eur
+
+	column working_capital_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: working_capital_eur
+
+	column weighted_working_capital_eur
+		dataType: double
+		summarizeBy: none
+		sourceColumn: weighted_working_capital_eur
+
+	column data_label
+		dataType: string
+		summarizeBy: none
+		sourceColumn: data_label
+
+	column model_version
+		dataType: string
+		summarizeBy: none
+		sourceColumn: model_version
+
+	partition finance_contracts = m
+		mode: import
+		source =
+			#table(
+				type table [contract = text, plant = text, country = text, customer = text, contracted_eur = Int64.Type, planned_batteries = Int64.Type, ready_share = nullable number, ready_eur = nullable number, exposed_eur = nullable number, delay_days = Int64.Type, delay_probability = nullable number, margin_share = nullable number, margin_exposed_eur = nullable number, working_capital_eur = nullable number, weighted_working_capital_eur = nullable number, data_label = text, model_version = text],
+				{
+					{"SYN-01", "SE", "Sweden", "Nordic OEM", 720000000, 36000, 0.96, 691200000.00, 28800000.00, 15, 0.25, 0.18, 5184000.00, 1183561.64, 295890.41, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"SYN-02", "SE", "Sweden", "Transit OEM", 480000000, 24000, 0.94, 451200000.00, 28800000.00, 20, 0.30, 0.16, 4608000.00, 1578082.19, 473424.66, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"SYN-03", "DE", "Germany", "Central OEM", 630000000, 31500, 0.88, 554400000.00, 75600000.00, 30, 0.45, 0.20, 15120000.00, 6213698.63, 2796164.38, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"SYN-04", "DE", "Germany", "Fleet OEM", 420000000, 21000, 0.90, 378000000.00, 42000000.00, 25, 0.40, 0.17, 7140000.00, 2876712.33, 1150684.93, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"SYN-05", "PL", "Poland", "Eastern OEM", 450000000, 22500, 0.80, 360000000.00, 90000000.00, 45, 0.60, 0.15, 13500000.00, 11095890.41, 6657534.25, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"},
+					{"SYN-06", "PL", "Poland", "Storage OEM", 300000000, 15000, 0.84, 252000000.00, 48000000.00, 40, 0.55, 0.14, 6720000.00, 5260273.97, 2893150.68, "Synthetic assumption, not actual or approved", "SYN-FIN-2026-11"}
+				}
+			)

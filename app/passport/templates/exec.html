@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% macro case_action(url, style, label="Open the case") %}
+  {% if person.has_any(["Passport.Compliance", "Passport.Reviewer", "Passport.Authority"]) %}
+    <a class="btn {{ style }}" href="{{ url }}">{{ label }}</a>
+  {% elif "compliance" in persona.options %}
+    <form method="post" action="/personas">
+      <input type="hidden" name="persona" value="compliance">
+      <input type="hidden" name="return_to" value="{{ url }}">
+      <button class="btn {{ style }}" type="submit">Switch to Compliance Officer</button>
+    </form>
+  {% else %}
+    <p class="small">An assigned Compliance Officer must review this case.</p>
+  {% endif %}
+{% endmacro %}
+{% block style %}
+  .hero { display:grid; grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr); gap:36px; align-items:center; padding:28px 32px 28px 40px; }
+  .hero .eyebrow { color:var(--blue-ink); }
+  .hero-figure { font-size:46px; font-weight:600; line-height:1.05; letter-spacing:-.025em; margin:2px 0 16px; }
+  .hero .bar { height:14px; background:#DCE8F5; }
+  .hero-note { margin:12px 0 0; font-size:15px; color:var(--muted); }
+  .next { background:var(--white); border:1px solid var(--line); border-radius:8px; padding:20px 22px; box-shadow:var(--shadow); }
+  .next-label { font-size:12.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0 0 8px; }
+  .next p { font-size:15px; }
+  .head-actions { display:flex; align-items:center; gap:12px; }
+  .battery { display:flex; flex-direction:column; overflow:hidden; container-type:inline-size; }
+  .battery .edge { height:5px; background:var(--neutral); }
+  .battery .edge.good { background:var(--green); } .battery .edge.warn { background:var(--amber); }
+  .battery .edge.bad { background:var(--red); } .battery .edge.info { background:var(--blue); }
+  .battery-head { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .battery-badge { width:40px; height:40px; border-radius:10px; display:grid; place-items:center; color:var(--blue-ink); background:var(--blue-tint); flex:none; }
+  .battery-head p { margin:0; font-size:14px; color:var(--muted); }
+  .battery .status { margin-bottom:16px; }
+  .battery .facts { font-size:14.5px; }
+  .battery .pill { margin-left:6px; font-weight:600; --accent-ink:var(--amber-ink); background:var(--amber-tint); border-color:#E9D6A6; }
+  .card-actions { margin-top:auto; display:flex; flex-wrap:wrap; gap:10px; padding:16px 24px; border-top:1px solid #EDEBE9; background:#FBFBFA; }
+  .card-actions .btn { white-space:nowrap; }
+  @container (max-width:330px) { .battery .facts { grid-template-columns:1fr; gap:0; } .battery .facts dd { margin-bottom:8px; }
+    .battery .pill { margin-left:8px; } }
+  .hold-row { display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .hold-row p { margin:0; }
+  table.lots { min-width:640px; }
+  .lots th, .lots td { overflow-wrap:normal; }
+  .lots .status, .lots th[scope=row], .lots td a { white-space:nowrap; }
+  @media (max-width:1200px) { .has-side .hero { grid-template-columns:1fr; gap:20px; } }
+  @media (max-width:900px) { .hero { grid-template-columns:1fr; gap:20px; } .hold-row { flex-direction:column; align-items:flex-start; } }
+{% endblock %}
+{% block content %}
+{% if view.empty %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Passport readiness</p>
+    <h1>No production series imported yet</h1>
+    <p class="subtitle">Start the story (<code>python -m dbp_mvp run story</code>) and this page shows its progress.</p>
+  </div>
+</div>
+{% else %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">{{ view.scope_label }} · {{ view.progress.total }} produced batter{{ 'ies' if view.progress.total != 1 else 'y' }}</p>
+    <h1>Passport readiness</h1>
+    <p class="subtitle">Status as of {{ view.now }}</p>
+  </div>
+  <div class="head-actions no-print">
+  {% if guide %}
+    <span class="status tone-info">Guided view: refresh manually</span>
+  {% elif live %}
+    <span class="status tone-info">Live: refreshes every 5 seconds</span>
+    <a class="btn btn-secondary btn-sm" href="/exec?series={{ view.series_id|urlencode }}&amp;live=0">Stop refreshing</a>
+  {% else %}
+    <a class="btn btn-secondary btn-sm" href="/exec?series={{ view.series_id|urlencode }}&amp;live=1">Live mode</a>
+  {% endif %}
+  </div>
+</div>
+
+<section class="panel p-blue hero" aria-label="Progress">
+  <div>
+    <p class="eyebrow">Digital battery passports</p>
+    <p class="hero-figure">{{ view.progress.text }}</p>
+    <div class="bar" role="img" aria-label="{{ view.progress.valid }} of {{ view.progress.total }} batteries have a valid passport">
+      <span style="width: {{ view.progress.percent }}%"></span>
+    </div>
+    <p class="hero-note">Coverage {{ view.progress.coverage }}: {{ view.progress.coverage_text }}.</p>
+  </div>
+  <div class="next">
+    <p class="next-label">{{ "Next step" if view.action.url else "Status" }}</p>
+    <p>{{ view.action.why }}</p>
+    {% if view.action.url and view.action.url.startswith("/cases/") %}
+      {{ case_action(view.action.url, "btn-primary", view.action.text) }}
+    {% elif view.action.url %}
+      <a class="btn btn-primary" href="{{ view.action.url }}">{{ view.action.text }} {{ brand.icon("arrow", 18) }}</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="section grid-4" aria-label="Key figures">
+  <div class="panel p-blue kpi">
+    <span class="pill corner">Target 100%</span>
+    {{ brand.icon("passport", 26) }}
+    <p class="kpi-label">Passport coverage</p>
+    <p class="kpi-value">{{ view.progress.coverage }}</p>
+    <p class="kpi-detail">{{ view.progress.valid }} valid of {{ view.progress.total }} in scope</p>
+  </div>
+  <div class="panel p-amber kpi">
+    <span class="pill corner">Human decision</span>
+    {{ brand.icon("hold", 26) }}
+    <p class="kpi-label">Open human decisions</p>
+    <p class="kpi-value">{{ view.holds|length + view.cases_open }}</p>
+    <p class="kpi-detail">{{ view.holds|length }} sourcing review(s), {{ view.cases_open }} compliance case(s)</p>
+  </div>
+  <div class="panel p-purple kpi">
+    <span class="pill corner">AI proposes</span>
+    {{ brand.icon("agent", 26) }}
+    <p class="kpi-label">Agent work</p>
+    <p class="kpi-value">{{ view.runs.runs }}</p>
+    <p class="kpi-detail">{{ view.runs.runs_text }}; {{ view.runs.tokens }}</p>
+  </div>
+  <div class="panel p-teal kpi">
+    <span class="pill corner">Model tokens</span>
+    {{ brand.icon("cost", 26) }}
+    <p class="kpi-label">Model cost</p>
+    <p class="kpi-value{% if view.runs.cost.text == 'not measured' %} is-text{% endif %}">{{ view.runs.cost.text }}</p>
+    <p class="kpi-detail">per published passport: {{ view.runs.cost.per_passport }}</p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="measures">
+  <div class="section-head"><h2 id="measures">Success measures</h2><p>Defined once in metrics.py and computed from the reporting rows in the selected scope. Synthetic data; footprints and values are illustrative.</p></div>
+  <div class="grid-4">
+  {% for tile in view.tiles %}
+    <div class="panel p-blue kpi">
+      <span class="pill corner">{{ tile.label|capitalize }}</span>
+      <p class="kpi-label">{{ tile.title }}</p>
+      <p class="kpi-value{% if tile.value == 'not measured' %} is-text{% endif %}">{{ tile.value }}</p>
+      <p class="kpi-detail">{{ tile.text }}</p>
+    </div>
+  {% endfor %}
+  </div>
+  <div class="card table-card section">
+  <table aria-label="Measures per plant">
+    <thead><tr><th scope="col">Plant</th><th scope="col">Produced</th><th scope="col">Published</th><th scope="col">Coverage</th><th scope="col">Verified footprint</th><th scope="col">Average footprint (illustrative)</th></tr></thead>
+    <tbody>
+    {% for plant in view.plants %}
+      <tr>
+        <th scope="row">{{ plant.plant_id }}</th>
+        <td>{{ plant.produced }}</td>
+        <td>{{ plant.published }}</td>
+        <td>{{ plant.coverage }}</td>
+        <td>{{ plant.verified_footprint_batteries }}</td>
+        <td>{{ plant.footprint }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="batteries">
+  <div class="section-head"><h2 id="batteries">Batteries</h2><p>Each battery receives its own digital passport.</p></div>
+  <div class="grid-3">
+  {% for battery in view.batteries %}
+    <article class="card battery">
+      <div class="edge {{ battery.status.tone }}"></div>
+      <div class="card-body">
+        <div class="battery-head">
+          <span class="battery-badge">{{ brand.icon("battery", 22) }}</span>
+          <div><h3>Battery {{ battery.battery_id }}</h3><p>Model {{ battery.model_id }}{% if battery.successor %} · Second-life successor{% endif %}</p></div>
+        </div>
+        <span class="status tone-{{ battery.status.tone }}">{{ battery.status.text }}</span>
+        <dl class="facts">
+          <dt>Passport</dt><dd>{% if battery.version %}Version {{ battery.version }}, {{ battery.published_when }}{% else %}Not issued{% endif %}</dd>
+          <dt>Carbon footprint</dt><dd>{{ battery.carbon }}<span class="pill">{{ view.carbon_label }}</span></dd>
+          <dt>Supplier lots</dt><dd>{{ battery.lots|join(", ") }}</dd>
+        </dl>
+      </div>
+      <div class="card-actions">
+        <a class="btn btn-secondary btn-sm" href="{{ battery.public_url }}">{{ brand.icon("passport", 16) }} Passport</a>
+        <a class="btn btn-secondary btn-sm" href="{{ battery.trail_url }}">{{ brand.icon("trail", 16) }} Decision trail</a>
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+</section>
+
+{% if view.holds %}
+<section class="section" aria-labelledby="holds">
+  <div class="section-head"><h2 id="holds">Waiting for a decision</h2><p>Agents cannot clear a hold; a reviewer decides.</p></div>
+  {% for hold in view.holds %}
+  <div class="panel p-amber hold-row">
+    <div>
+      <p class="panel-title">{{ brand.icon("hold", 20) }} Supplier lot {{ hold.lot_id }} is on hold</p>
+      <p class="small">{{ hold.batteries|length }} batter{{ 'ies' if hold.batteries|length != 1 else 'y' }} ({{ hold.batteries|join(", ") }}) · raised by the {{ hold.opened_by }} · open for {{ hold.age }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ hold.url }}">Open the hold</a>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if view.cases %}
+<section class="section" aria-labelledby="compliance-cases">
+  <div class="section-head"><h2 id="compliance-cases">Compliance decisions</h2><p>A valid signature does not resolve an adverse sourcing report.</p></div>
+  {% for case in view.cases %}
+  <div class="panel p-amber hold-row">
+    <div><p class="panel-title">Supplier lot {{ case.lot_id }}</p>
+      <p class="small">{{ case.batteries|join(", ") }} remain held until a Compliance Officer decides.</p></div>
+    {{ case_action(case.url, "btn-secondary") }}
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="section" aria-labelledby="evidence">
+  <div class="section-head"><h2 id="evidence">Supplier evidence</h2><p>Document pairs show claim/transport corroboration, not the supplier-completeness KPI. Some lots have no separate transport record. 2 of 2 = supplier claim + transport record. Open a lot to see its documents.</p></div>
+  <div class="card table-card">
+  <table class="lots">
+    <thead><tr><th scope="col">Supplier lot</th><th scope="col">Documents</th><th scope="col">Supplier check</th><th scope="col">Hold</th><th scope="col">Batteries</th></tr></thead>
+    <tbody>
+    {% for lot in view.lots %}
+      <tr>
+        <th scope="row"><a href="{{ lot.url }}">{{ lot.lot_id }}</a></th>
+        <td><span class="status tone-{{ lot.evidence.tone }}">{{ lot.evidence.text }}</span>{% if lot.evidence.missing %}<br><span class="small muted">{{ lot.evidence.missing }}</span>{% endif %}</td>
+        <td><span class="status tone-{{ lot.supplier.tone }}">{{ lot.supplier.text }}</span></td>
+        <td>{% if lot.hold %}<a href="{{ lot.hold.url }}">Open for {{ lot.hold.age }}</a>{% else %}<span class="muted">None</span>{% endif %}</td>
+        <td>{% for b in lot.battery_links %}<a href="{{ b.url }}">{{ b.battery_id }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+
+<p class="note">Agent figures come from the application's own records; "not measured" means the run did not report it.
+  Model cost: {{ view.runs.cost.note }}</p>
+{% endif %}
+{% endblock %}

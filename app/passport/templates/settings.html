@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{% block style %}
+  .settings-group { margin-top:28px; }
+  .group-head { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+  .group-head .icon { color:var(--blue-ink); }
+  .group-head h2 { margin:0; font-size:20px; }
+  .group-text { margin:0 0 16px; color:var(--muted); font-size:14px; max-width:760px; }
+  .setting { padding:16px 0; border-top:1px solid #EDEBE9; }
+  .setting:first-of-type { border-top:0; padding-top:4px; }
+  label.field { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-weight:600; margin-bottom:6px; }
+  input[type=text], input[type=url], input[type=password], select {
+    width:100%; max-width:640px; font:inherit; padding:9px 12px; border:1.5px solid var(--line-strong); border-radius:6px;
+    background:var(--white); color:var(--ink); }
+  .setting.has-error input, .setting.has-error select { border-color:var(--red); }
+  .hint { margin:6px 0 0; font-size:14px; color:var(--muted); max-width:640px; }
+  .deploy { margin:6px 0 0; font-size:13px; color:var(--muted); overflow-wrap:anywhere; }
+  .field-error { margin:6px 0 0; font-size:14px; color:var(--red-ink); font-weight:600; }
+  .tick { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:14px; }
+  .tick input { width:18px; height:18px; accent-color:var(--teal); }
+  .tag.override { color:var(--purple-ink); background:var(--purple-tint); border-color:var(--purple-line); }
+  .tag.restart { color:var(--amber-ink); background:var(--amber-tint); border-color:var(--amber); }
+  .form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:14px 18px; margin-top:28px; }
+  .form-actions .tick { margin:0; }
+  .results { list-style:none; padding:0; margin:8px 0 0; }
+  .results li { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:6px 0; }
+  code.cmd { display:block; margin-top:8px; padding:10px 12px; background:var(--white); border:1px solid var(--line); border-radius:6px;
+             font-size:13px; overflow-wrap:anywhere; }
+  .reset { margin-top:16px; }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Tools</p>
+    <h1>Settings</h1>
+    <p class="subtitle">Connect this app to your Azure environment. Changes apply after a restart.</p>
+  </div>
+  <span class="status big tone-{{ state[1] }}">{{ state[0] }}</span>
+</div>
+
+{% if saved %}
+<div class="panel p-good notice" role="status">
+  <p class="panel-title">{{ brand.icon("shield", 20) }} Settings saved.</p>
+  <p style="margin:0">{% if view.pending %}Restart the app to use them.{% else %}The app already runs with these values.{% endif %}</p>
+</div>
+{% endif %}
+{% if view.load_error %}
+<div class="panel p-bad notice" role="alert"><p style="margin:0"><strong>Saved settings ignored.</strong> {{ view.load_error }}</p></div>
+{% endif %}
+{% if view.save_off %}
+<div class="panel p-warn notice" role="status"><p style="margin:0">{{ view.save_off }}</p></div>
+{% endif %}
+{% if form_error %}
+<div class="panel p-bad notice" role="alert"><p style="margin:0"><strong>Not saved.</strong> {{ form_error }}</p></div>
+{% elif field_errors %}
+<div class="panel p-bad notice" role="alert"><p style="margin:0"><strong>Not saved.</strong> Correct the fields marked below.</p></div>
+{% endif %}
+{% if results is not none %}
+<div class="panel {{ 'p-good' if results and results|selectattr('ok')|list|length == results|length else ('p-info' if not results else 'p-bad') }} notice" role="status">
+  <p class="panel-title">{{ brand.icon("shield", 20) }} Connection test</p>
+  {% if results %}
+  <ul class="results">
+  {% for r in results %}
+    <li><span class="status tone-{{ 'good' if r.ok else 'bad' }}">{{ 'Connected' if r.ok else 'Failed' }}</span><strong>{{ r.name }}</strong>
+      {% if not r.ok %}<span class="muted small">{{ r.text }}</span>{% endif %}</li>
+  {% endfor %}
+  </ul>
+  {% else %}
+  <p style="margin:0">Nothing to test: the values point at no Azure service.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% if view.pending %}
+<div class="panel p-warn notice" role="status">
+  <p class="panel-title">{{ brand.icon("hold", 20) }} Restart required</p>
+  <p style="margin:0">Saved but not in use yet: {{ view.pending|join(", ") }}.</p>
+  {% if view.restart.azure %}<code class="cmd">{{ view.restart.command }}</code>
+  {% else %}<p style="margin:6px 0 0">{{ view.restart.text }}</p>{% endif %}
+</div>
+{% endif %}
+
+{% if editable %}
+<form method="post" action="/settings" novalidate>
+{% for g in view.groups %}
+  <section class="card card-body settings-group" aria-labelledby="g-{{ g.name }}">
+    <div class="group-head">{{ brand.icon(g.icon, 22) }}<h2 id="g-{{ g.name }}">{{ g.title }}</h2>
+      {% if g.overrides %}<span class="tag override">{{ g.overrides }} saved here</span>{% endif %}</div>
+    <p class="group-text">{{ g.text }}</p>
+  {% for f in g.fields %}
+    <div class="setting{% if f.error %} has-error{% endif %}">
+      <label class="field" for="{{ f.key }}">{{ f.label }}
+        {% if f.overridden %}<span class="tag override">Saved here</span>{% endif %}
+        {% if f.pending %}<span class="tag restart">Restart required</span>{% endif %}</label>
+    {% if f.kind == "choice" %}
+      <select id="{{ f.key }}" name="{{ f.key }}"{% if f.error %} aria-invalid="true" aria-describedby="{{ f.key }}-error"{% endif %}>
+      {% for value, text in f.choices %}<option value="{{ value }}"{% if value == f.value %} selected{% endif %}>{{ text }}</option>{% endfor %}
+      </select>
+    {% elif f.kind == "secret" %}
+      <input type="password" id="{{ f.key }}" name="{{ f.key }}" value="" autocomplete="off" spellcheck="false"
+        placeholder="{{ 'Leave empty to keep the current value' if f.has_value else f.placeholder }}"
+        aria-describedby="{{ f.key }}-now{% if f.error %} {{ f.key }}-error{% endif %}"{% if f.error %} aria-invalid="true"{% endif %}>
+      <p class="hint" id="{{ f.key }}-now">Current: {{ f.display }}</p>
+      {% if f.has_value %}<label class="tick"><input type="checkbox" name="clear_{{ f.key }}" value="1"> Remove the saved connection string</label>{% endif %}
+    {% else %}
+      <input type="{{ 'url' if f.kind in ('account', 'public', 'link') else 'text' }}" id="{{ f.key }}" name="{{ f.key }}"
+        value="{{ f.value }}" placeholder="{{ f.placeholder }}" autocomplete="off" spellcheck="false" maxlength="2048"
+        {% if f.error %}aria-invalid="true" aria-describedby="{{ f.key }}-error"{% endif %}>
+    {% endif %}
+      {% if f.error %}<p class="field-error" id="{{ f.key }}-error">{{ f.error }}</p>{% endif %}
+      {% if f.help %}<p class="hint">{{ f.help }}</p>{% endif %}
+      <p class="deploy">Deployment value: {{ f.deployment }}</p>
+    </div>
+  {% endfor %}
+  </section>
+{% endfor %}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit" name="action" value="save">Save settings</button>
+    <button class="btn btn-secondary" type="submit" name="action" value="test">Test connections</button>
+    <label class="tick"><input type="checkbox" name="skip_test" value="1"> Save without testing</label>
+  </div>
+</form>
+{% if view.saved_count %}
+<form method="post" action="/settings" class="reset">
+  <button class="btn btn-secondary btn-sm" type="submit" name="action" value="reset">Use the deployment values again</button>
+  <span class="muted small">Removes the {{ view.saved_count }} value{{ 's' if view.saved_count != 1 }} saved here.</span>
+</form>
+{% endif %}
+{% else %}
+{% for g in view.groups %}
+  <section class="card card-body settings-group" aria-labelledby="g-{{ g.name }}">
+    <div class="group-head">{{ brand.icon(g.icon, 22) }}<h2 id="g-{{ g.name }}">{{ g.title }}</h2></div>
+    <p class="group-text">{{ g.text }}</p>
+    <dl class="facts">
+    {% for f in g.fields %}
+      <dt>{{ f.label }}</dt>
+      <dd>{{ f.display }}{% if f.overridden %} <span class="tag override">Saved here</span>{% endif %}{% if f.pending %} <span class="tag restart">Restart required</span>{% endif %}</dd>
+    {% endfor %}
+    </dl>
+  </section>
+{% endfor %}
+{% if not view.save_off %}<p class="note">Only a Passport.Admin can change these values.</p>{% endif %}
+{% endif %}
+
+<div class="grid-2 section">
+  <section class="panel p-neutral" aria-labelledby="fixed">
+    <h2 class="panel-title" id="fixed">{{ brand.icon("shield", 20) }} Fixed at deployment</h2>
+    <dl class="facts">
+    {% for name, value in view.fixed %}<dt>{{ name }}</dt><dd>{{ value }}</dd>{% endfor %}
+    {% if view.meta.updated_utc %}<dt>Last saved</dt><dd>{{ view.meta.updated_utc }} by {{ view.meta.updated_by or "unknown" }}</dd>{% endif %}
+    </dl>
+  </section>
+  <section class="panel p-info" aria-labelledby="how">
+    <h2 class="panel-title" id="how">{{ brand.icon("readiness", 20) }} How settings work</h2>
+    <p style="margin:0 0 8px">The deployment (Bicep) sets every value. A value saved here replaces it after the next restart; anything not saved keeps following the deployment.</p>
+    <p style="margin:0">The app signs in to SQL and Storage with its managed identity, so no password is stored. Only the Application Insights connection string is secret, and it is never shown again.</p>
+  </section>
+</div>
+{% endblock %}

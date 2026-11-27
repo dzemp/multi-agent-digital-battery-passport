@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% import "_brand.html" as brand %}
+{# kind -> (actor class, icon, key label, what it means). Each actor has a colour, an outline shape and an icon. #}
+{% set KIND = {"agent": ("k-ai", "agent", "AI agent", "Proposes; the application checks every proposal"),
+               "human": ("k-person", "person", "Person", "Decides holds, cases and second life; never publishes"),
+               "rule": ("k-app", "rule", "Application rule", "Deterministic, no AI"),
+               "calculation": ("k-app", "shield", "Footprint calculation", "Pinned method and factor versions, no AI"),
+               "lifecycle": ("k-app", "battery", "Lifecycle record or link", "Recorded by the application, no AI"),
+               "case": ("k-case", "hold", "Compliance case", "Opened or reopened; Compliance decides"),
+               "import": ("k-data", "evidence", "Package import", "Composition and supplier lots"),
+               "connector": ("k-data", "arrow", "Signed partner message", "Mock intake; see acceptance or refusal")} %}
+{% set CORE = ("agent", "human", "rule") %}
+{% set REFUSED = ("k-ai is-bad", "agent", "Refused AI proposal", "The application refused it; not applied") %}
+{% set SCRIPTED = ("k-app", "agent", "Scripted agent (not AI)", "Local stand-in; the application checks it like an agent") %}
+{% set all_steps = view.path + view.after %}
+{% set kinds = all_steps|map(attribute="kind")|list %}
+{% set agent_steps = all_steps|selectattr("kind", "equalto", "agent")|list %}
+{% set any_scripted = agent_steps|selectattr("scripted")|list %}
+{% set only_scripted = any_scripted and any_scripted|length == agent_steps|length %}
+{% set any_refused = agent_steps|rejectattr("scripted")|selectattr("tone", "equalto", "bad")|list %}
+{% macro key_item(look, full) %}
+<li><span class="swatch {{ look[0] }}" aria-hidden="true">{{ brand.icon(look[1], 15) }}</span>
+  <span><strong>{{ look[2] }}</strong>{% if full %}<span class="meaning">{{ look[3] }}</span>{% endif %}</span></li>
+{% endmacro %}
+{% macro legend(full) %}
+<ul class="legend{% if full %} legend-full{% endif %}" aria-label="{{ 'Key to the step icons' if full else 'Key to the decision timeline' }}">
+  {% for kind in KIND if (kind in CORE or kind in kinds) and not (kind == "agent" and only_scripted) %}{{ key_item(KIND[kind], full) }}{% endfor %}
+  {% if any_scripted %}{{ key_item(SCRIPTED, full) }}{% endif %}
+  {% if any_refused %}{{ key_item(REFUSED, full) }}{% endif %}
+</ul>
+{% endmacro %}
+{% macro step_summary(step, toggle) %}
+<span class="step-main">
+  <h3>{{ step.actor }}{% if step.kind == "agent" %} · {{ step.subject }}{% endif %}</h3>
+  {% if step.kind == "agent" %}
+  <span class="step-origin">{{ step.subject_label }} · Source: {{ step.origin }}</span>
+  <span class="when">Task created {{ step.when }}</span>
+  <span class="when">Result recorded: {{ step.completed_when }}</span>
+  {% else %}<span class="when">{{ step.when }}</span>{% endif %}
+</span>
+<span class="pills">
+  <span class="pill{% if step.kind == 'agent' and step.is_ai %} ai{% endif %}">{{ step.label }}</span>
+  {% if step.kind == "agent" and step.autonomy %}<span class="pill">Autonomy {{ step.autonomy }}</span>{% endif %}
+</span>
+<span class="status tone-{{ step.tone }}">{{ step.text }}</span>
+{% if toggle %}<span class="toggle" aria-hidden="true"><span class="show">Show details</span><span class="hide">Hide details</span>{{ brand.icon("chevron", 16) }}</span>{% endif %}
+{% endmacro %}
+{% macro step_card(step) %}
+{% set look = SCRIPTED if step.scripted else KIND.get(step.kind, KIND.agent) %}
+{% set has_body = step.kind == "agent" or step.reviewer or step.reason or step.details or step.evidence
+                  or step.review_id or step.case_id or step.message_id %}
+<li class="step {{ look[0] }}{% if step.kind == 'agent' and step.tone == 'bad' %} is-bad{% endif %}"{% if step.kind == "agent" %} id="task-{{ step.task_id }}"{% endif %}>
+  <span class="marker" aria-hidden="true">{{ brand.icon(look[1], 18) }}</span>
+  {% if not has_body %}
+  <div class="card step-card"><div class="step-summary">{{ step_summary(step, False) }}</div></div>
+  {% else %}
+  <details class="card step-card">
+    <summary class="step-summary">{{ step_summary(step, True) }}</summary>
+    <div class="step-body">
+    {% if step.kind == "agent" %}
+      <dl class="facts">
+        <dt>{{ step.subject_label }}</dt><dd><a href="{{ step.subject_url }}">{{ step.subject }}</a></dd>
+        <dt>Task source</dt><dd>{{ step.origin }}</dd>
+        <dt>Task ID</dt><dd class="mono">{{ step.task_id }}</dd>
+        {% for label, value in step.inputs %}<dt>{{ label }}</dt><dd class="mono">{{ value }}</dd>{% endfor %}
+      </dl>
+      {% if step.role == "supplier" %}
+      <p class="muted small">This is a lot-level assessment. The same task appears in the trails of batteries using this lot; it is not a separate run for each battery.</p>
+      <p class="k">Evidence supplied to this task</p>
+      {% if step.sources %}
+      <ul class="task-sources">{% for source in step.sources %}
+        <li>{{ source.name }} · {{ source.kind }} · <span class="mono">{{ source.id }}</span></li>
+      {% endfor %}</ul>
+      {% else %}<p class="muted small">No evidence was supplied to this task.</p>{% endif %}
+      {% endif %}
+      {% if step.reason %}<p class="reasoning"{% if step.reason_ai %} data-ai-generated="true" data-provenance-id="{{ step.provenance_id }}"{% endif %}><span class="muted">Agent reasoning{% if step.reason_ai %} <span class="pill ai">AI-generated</span>{% endif %}:</span> {{ step.reason }}</p>{% endif %}
+      {% if step.app_message %}<p class="reasoning"><span class="muted">Application message:</span> {{ step.app_message }}</p>{% endif %}
+      <div class="metrics">
+        <div><p class="k">Model</p><p class="v">{{ step.model }}{% if step.model_version %} ({{ step.model_version }}){% endif %}</p></div>
+        <div><p class="k">Tokens</p><p class="v">{{ step.tokens }}</p></div>
+        <div><p class="k">Latency</p><p class="v">{{ step.latency }}</p></div>
+        <div><p class="k">Model cost</p><p class="v">{{ step.cost }}</p></div>
+      </div>
+      <div class="check"><span class="k">Application check</span>
+        <span class="status tone-{{ step.gate_tone }}">{{ step.gate }}</span><span class="muted small">{{ step.check }}</span></div>
+    {% else %}
+      <dl class="facts">
+        {% if step.kind == "connector" %}<dt>{{ step.subject_label }}</dt><dd><a href="{{ step.subject_url }}">{{ step.subject }}</a></dd>{% endif %}
+        {% if step.reviewer %}<dt>Person</dt><dd>{{ step.reviewer }}</dd>{% endif %}
+        {% if step.reason %}<dt>Reason</dt><dd style="font-weight:400">{{ step.reason }}</dd>{% endif %}
+        {% for k, v in step.details or [] %}<dt>{{ k }}</dt><dd class="mono">{{ v }}</dd>{% endfor %}
+        {% if step.evidence %}<dt>Evidence used</dt><dd>{{ step.evidence|join(", ") }}</dd>{% endif %}
+        {% if step.review_id %}<dt>Hold</dt><dd><a href="/holds/{{ step.review_id }}">{{ step.review_id }}</a></dd>{% endif %}
+        {% if step.case_id %}<dt>Compliance case</dt><dd><a href="/cases/{{ step.case_id }}">{{ step.case_id }}</a></dd>{% endif %}
+        {% if step.message_id %}<dt>Message</dt><dd class="mono">{{ step.message_id }}</dd><dt>Reason code</dt><dd class="mono">{{ step.reason_code }}</dd>{% endif %}
+      </dl>
+      {% if step.note %}<p class="muted small">{{ step.note }}</p>{% endif %}
+    {% endif %}
+    </div>
+  </details>
+  {% endif %}
+</li>
+{% endmacro %}
+{% macro step_tools(list_id) %}
+<div class="step-tools no-print">
+  <p class="muted small">Open a step for its source records, task ID, reasoning and checks.</p>
+  <button type="button" class="btn btn-secondary btn-sm" data-expand-all aria-controls="{{ list_id }}" hidden>Expand all steps</button>
+</div>
+{% endmacro %}
+{% block head %}<script src="/static/trail.js?v=1" defer></script>{% endblock %}
+{% block style %}
+  .path-card { padding:22px 24px; }
+  ol.path { gap:10px; align-items:stretch; }
+  ol.path li { min-width:0; max-width:100%; }
+  ol.path li + li::before { content:none; }
+  ol.path .chip { max-width:100%; align-items:flex-start; text-decoration:none; }
+  ol.path .chip-copy { min-width:0; overflow-wrap:anywhere; }
+  ol.path .chip-time { display:block; font-size:12px; font-weight:400; margin-top:4px; }
+  ol.path .chip .icon { flex:none; }
+  .timeline-note { margin:0 0 16px; }
+  .callout { margin-top:20px; }
+  .callout p { margin:0; font-size:16px; }
+  .key-card { padding:16px 20px; margin-bottom:16px; }
+  .key-card .eyebrow { color:var(--muted); }
+  .legend-full { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px 24px; margin:0; }
+  .legend-full li { align-items:flex-start; }
+  .legend-full strong { display:block; font-weight:600; }
+  .legend-full .meaning { display:block; color:var(--muted); font-size:13px; line-height:1.4; }
+  .step-tools { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+  .step-tools p { margin:0; }
+  [data-expand-all][hidden] { display:none; }
+  .timeline { list-style:none; margin:0; padding:0; position:relative; }
+  .timeline::before { content:""; position:absolute; left:17px; top:8px; bottom:8px; width:2px; background:var(--line); }
+  .step { position:relative; padding-left:56px; margin-bottom:12px; }
+  .marker { position:absolute; left:0; top:16px; width:36px; height:36px; display:grid; place-items:center;
+            background:var(--tint); color:var(--accent-ink);
+            border:var(--edge-w, 1.5px) var(--edge, solid) var(--accent); border-radius:var(--round, 999px); }
+  .step-card { border-left:var(--stripe, 4px solid) var(--accent); overflow:hidden; }
+  .step-summary { display:grid; grid-template-columns:minmax(0, 1fr) auto; align-items:start; gap:10px 16px; padding:16px 22px; }
+  summary.step-summary { cursor:pointer; list-style:none; }
+  summary.step-summary:focus-visible { outline-offset:-4px; }
+  summary.step-summary::-webkit-details-marker { display:none; }
+  summary.step-summary:hover { background:var(--neutral-tint); }
+  .step-main { display:block; min-width:0; grid-column:1 / -1; }
+  .step-main .when, .step-origin { display:block; font-size:13.5px; color:var(--muted); }
+  .step-origin { margin:4px 0; }
+  .task-sources { padding-left:20px; font-size:14px; overflow-wrap:anywhere; }
+  .step-card .mono { overflow-wrap:anywhere; }
+  .step-summary > .status { justify-self:start; }
+  .pills { display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-start; grid-column:1 / -1; }
+  .toggle { display:inline-flex; align-items:center; gap:4px; align-self:center; justify-self:end; white-space:nowrap;
+            font-size:13.5px; font-weight:600; color:var(--blue-ink); }
+  .toggle .icon { transition:transform .15s ease; }
+  details[open] > summary .toggle .icon { transform:rotate(90deg); }
+  details[open] > summary .toggle .show, details:not([open]) > summary .toggle .hide { display:none; }
+  @media (prefers-reduced-motion:reduce) { .toggle .icon { transition:none; } }
+  .step-body { margin:0 22px; padding:2px 0 18px; border-top:1px solid var(--line); }
+  .reasoning { margin:12px 0 0; font-size:15px; }
+  .metrics { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin:14px 0 12px; }
+  .metrics > div { background:var(--neutral-tint); border-radius:6px; padding:8px 12px; }
+  .metrics .k, .check .k { margin:0; font-size:12.5px; color:var(--muted); }
+  .metrics .v { margin:0; font-size:14.5px; font-weight:600; overflow-wrap:anywhere; }
+  .check { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; }
+  .step-card dl.facts { margin-top:12px; font-size:14.5px; }
+  .totals .kpi-value { font-size:24px; }
+  .links { display:flex; gap:10px; margin-top:28px; }
+  @media (max-width:900px) { .metrics { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+  @media (max-width:760px) { .step-summary { grid-template-columns:minmax(0, 1fr); } .pills, .toggle { justify-self:start; }
+                             .pills { justify-content:flex-start; } }
+  @media print { .toggle { display:none; } }
+{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Decision trail · model {{ view.model_id }} · supplier lots {{ view.lots|join(", ") }}</p>
+    <h1>Battery {{ view.battery_id }}</h1>
+    <p class="subtitle">{% if view.version %}Passport version {{ view.version }}, published {{ view.published_when }}{% else %}No passport version published yet{% endif %}</p>
+  </div>
+  <span class="status big tone-{{ view.status.tone }}">{{ view.status.text }}</span>
+</div>
+
+<section aria-labelledby="path">
+  <div class="section-head"><h2 id="path">Decision timeline</h2><p>Recorded times, not a chain of agent calls.</p></div>
+  <div class="card path-card">
+    <p class="muted small timeline-note">Oldest first; agent tasks are ordered by creation time, not completion time.
+      Tasks can overlap. Exact timestamp ties do not imply execution order.
+      Supplier tasks assess individual lots shared by batteries: different lot IDs mean different assessments, not retries.</p>
+  {% if view.chips %}
+    <ol class="path" aria-label="Decision timeline">
+    {% for chip in view.chips %}
+      {% set look = SCRIPTED if chip.scripted else KIND.get(chip.kind, KIND.agent) %}
+      <li>{% if chip.task_id %}<a href="#task-{{ chip.task_id }}"{% else %}<span{% endif %} class="chip {{ look[0] }}{% if chip.tone == 'bad' %} is-bad{% endif %}">
+        {{ brand.icon(look[1], 16) }}<span class="chip-copy">{{ chip.text }}<span class="chip-time">{% if chip.task_id %}Created {% endif %}{{ chip.when }}</span></span>
+      {% if chip.task_id %}</a>{% else %}</span>{% endif %}</li>
+    {% endfor %}
+    </ol>
+    {{ legend(False) }}
+  {% else %}
+    <p class="muted" style="margin:0">No agent has worked on this battery yet.</p>
+  {% endif %}
+  </div>
+  {% if view.autonomy %}
+  <div class="panel p-purple callout">
+    <span class="pill corner">Autonomy</span>
+    <p class="panel-title">{{ brand.icon("agent", 20) }} How this passport was decided</p>
+    <p>{{ view.autonomy }}</p>
+  </div>
+  {% endif %}
+</section>
+
+<section class="section" aria-labelledby="integrity">
+  <div class="section-head"><h2 id="integrity">Integrity</h2><p>Is the published record exactly what was decided?</p></div>
+{% if view.integrity %}
+  <div class="grid-2">
+    <div class="panel p-{{ view.integrity.ledger.tone }}">
+      <p class="panel-title">{{ brand.icon("shield", 20) }} {{ view.integrity.ledger.title }}</p>
+      <p class="small" style="margin:0">{{ view.integrity.ledger.message }}</p>
+    </div>
+    <div class="panel p-{{ view.integrity.snapshot.tone }}">
+      <p class="panel-title" style="margin:0">{{ brand.icon("evidence", 20) }} {{ view.integrity.snapshot.title }}</p>
+    </div>
+  </div>
+{% else %}
+  <div class="panel p-neutral"><p style="margin:0">No passport version is published yet, so there is nothing to verify.</p></div>
+{% endif %}
+</section>
+
+<section class="section" aria-labelledby="steps">
+  <div class="section-head"><h2 id="steps">Steps</h2><p>Agents propose; the application checks every proposal. People decide holds; they never publish.</p></div>
+  {% if view.path %}
+  <div class="card key-card">
+    <p class="eyebrow">Key</p>
+    {{ legend(True) }}
+  </div>
+  {{ step_tools("steps-list") }}
+  {% endif %}
+  <ol class="timeline" id="steps-list">
+  {% for step in view.path %}{{ step_card(step) }}{% endfor %}
+  </ol>
+</section>
+
+{% if view.after %}
+<section class="section" aria-labelledby="after">
+  <div class="section-head"><h2 id="after">After publication</h2></div>
+  {{ step_tools("after-list") }}
+  <ol class="timeline" id="after-list">
+  {% for step in view.after %}{{ step_card(step) }}{% endfor %}
+  </ol>
+</section>
+{% endif %}
+
+<section class="section totals" aria-labelledby="totals">
+  <div class="section-head"><h2 id="totals">Totals</h2></div>
+  <div class="grid-3">
+    <div class="panel p-purple kpi" style="min-height:0"><p class="kpi-label" style="margin-top:0">Agent work</p><p class="kpi-value">{{ view.totals.runs_text }}</p></div>
+    <div class="panel p-purple kpi" style="min-height:0"><p class="kpi-label" style="margin-top:0">Model usage</p><p class="kpi-value">{{ view.totals.tokens }}</p></div>
+    <div class="panel p-teal kpi" style="min-height:0"><p class="kpi-label" style="margin-top:0">Model cost</p><p class="kpi-value">{{ view.totals.cost.text }}</p></div>
+  </div>
+  <p class="note">{{ view.totals.cost.note }}</p>
+</section>
+
+<div class="links no-print">
+  <a class="btn btn-secondary" href="/p/{{ view.battery_id }}">{{ brand.icon("passport", 18) }} Public passport</a>
+  <a class="btn btn-secondary" href="/exec">Passport readiness</a>
+</div>
+{% endblock %}

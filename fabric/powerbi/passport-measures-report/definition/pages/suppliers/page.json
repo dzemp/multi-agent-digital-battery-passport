@@ -1,0 +1,186 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "suppliers",
+  "displayName": "Supplier assurance",
+  "displayOption": "FitToPage",
+  "height": 900,
+  "width": 1600,
+  "visualInteractions": [
+    {
+      "source": "kpi_0",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "claim_status",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "supplier_material",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "claim_status",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "supplier_material",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "claim_status",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "supplier_material",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "claim_status",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "supplier_material",
+      "type": "NoFilter"
+    },
+    {
+      "source": "claim_status",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "claim_status",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "claim_status",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "claim_status",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "claim_status",
+      "target": "supplier_material",
+      "type": "NoFilter"
+    },
+    {
+      "source": "supplier_material",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "supplier_material",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "supplier_material",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "supplier_material",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "supplier_material",
+      "target": "claim_status",
+      "type": "NoFilter"
+    }
+  ],
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#FAF9F8'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

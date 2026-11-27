@@ -1,0 +1,136 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "circularity",
+  "displayName": "Circular value",
+  "displayOption": "FitToPage",
+  "height": 900,
+  "width": 1600,
+  "visualInteractions": [
+    {
+      "source": "kpi_0",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "circular_bridge",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "circular_bridge",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "circular_bridge",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "circular_bridge",
+      "type": "NoFilter"
+    },
+    {
+      "source": "circular_bridge",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "circular_bridge",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "circular_bridge",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "circular_bridge",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    }
+  ],
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#FAF9F8'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

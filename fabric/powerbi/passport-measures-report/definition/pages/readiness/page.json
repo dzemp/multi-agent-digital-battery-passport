@@ -1,0 +1,186 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/page/2.0.0/schema.json",
+  "name": "readiness",
+  "displayName": "Market readiness",
+  "displayOption": "FitToPage",
+  "height": 900,
+  "width": 1600,
+  "visualInteractions": [
+    {
+      "source": "kpi_0",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "readiness_by_plant",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_0",
+      "target": "held_reasons",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "readiness_by_plant",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_1",
+      "target": "held_reasons",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "readiness_by_plant",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_2",
+      "target": "held_reasons",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "readiness_by_plant",
+      "type": "NoFilter"
+    },
+    {
+      "source": "kpi_3",
+      "target": "held_reasons",
+      "type": "NoFilter"
+    },
+    {
+      "source": "readiness_by_plant",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "readiness_by_plant",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "readiness_by_plant",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "readiness_by_plant",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "readiness_by_plant",
+      "target": "held_reasons",
+      "type": "NoFilter"
+    },
+    {
+      "source": "held_reasons",
+      "target": "kpi_0",
+      "type": "NoFilter"
+    },
+    {
+      "source": "held_reasons",
+      "target": "kpi_1",
+      "type": "NoFilter"
+    },
+    {
+      "source": "held_reasons",
+      "target": "kpi_2",
+      "type": "NoFilter"
+    },
+    {
+      "source": "held_reasons",
+      "target": "kpi_3",
+      "type": "NoFilter"
+    },
+    {
+      "source": "held_reasons",
+      "target": "readiness_by_plant",
+      "type": "NoFilter"
+    }
+  ],
+  "objects": {
+    "background": [
+      {
+        "properties": {
+          "color": {
+            "solid": {
+              "color": {
+                "expr": {
+                  "Literal": {
+                    "Value": "'#FAF9F8'"
+                  }
+                }
+              }
+            }
+          },
+          "transparency": {
+            "expr": {
+              "Literal": {
+                "Value": "0D"
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}
